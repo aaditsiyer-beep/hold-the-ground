@@ -14,7 +14,7 @@ Serve the folder (`python3 -m http.server 8000`) and open http://localhost:8000.
 - Keys 1-5 or shop buttons: soldier, archer, wall, sword upgrade, potion
 
 - Enter: start next wave
-- R: restart after death
+
 
 ## Features
 

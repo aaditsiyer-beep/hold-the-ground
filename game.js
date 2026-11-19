@@ -147,7 +147,7 @@ function clearAll() {
 function init() {
   clearAll();
   const x = KEEP.x - 12;
-  player = { x, z: 0, y: heightAt(x, 0), vy: 0, hp: 100, max: 100, cd: 0, hurt: 0, ang: Math.PI / 2, c: makeChar({ shirt: 0x2a6fd6, pants: 0x1c2e63, weapon: 'sword' }) };
+  player = { x, z: 0, y: heightAt(x, 0), vy: 0, hp: 100, max: 100, cd: 0, hurt: 0, dead: false, respawn: 0, ang: Math.PI / 2, c: makeChar({ shirt: 0x2a6fd6, pants: 0x1c2e63, weapon: 'sword' }) };
   enemies = []; soldiers = []; walls = []; effects = [];
   gold = 80; keepHp = 100; wave = 0; queue = []; spawnT = 0; waveActive = false; swordLvl = 0; state = 'play';
   yaw = Math.PI / 2; say('Press Enter to start wave 1. The enemy comes from the west.');
@@ -234,8 +234,15 @@ for (const s of SHOP) { const b = document.createElement('button'); b.textConten
 // ---------- update ----------
 function update(dt) {
   if (state === 'play') {
-    // player
     player.cd -= dt; player.hurt -= dt;
+    if (player.dead) {
+      player.respawn -= dt;
+      say('You fell. Respawning at the keep in ' + Math.max(1, Math.ceil(player.respawn)) + '...');
+      if (player.respawn <= 0) {
+        player.dead = false; player.hp = player.max; player.x = KEEP.x - 12; player.z = 0; player.y = heightAt(player.x, 0);
+        player.vy = 0; player.c.root.rotation.x = 0; say('');
+      }
+    } else {
     const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = -fz, rz = fx;
     const ix = (keys.d ? 1 : 0) - (keys.a ? 1 : 0), iz = (keys.w ? 1 : 0) - (keys.s ? 1 : 0);
     let moving = false;
@@ -254,6 +261,7 @@ function update(dt) {
     if (mouseDown && !rightDrag) playerAttack();
     face({ c: player.c }, Math.sin(player.ang), Math.cos(player.ang));
     animChar(player.c, dt, moving, 1);
+    }
 
     // spawn
     if (queue.length) { spawnT -= dt; if (spawnT <= 0) { spawnEnemy(queue.pop()); spawnT = Math.max(0.4, 1.4 - wave * 0.08); } }
@@ -262,7 +270,7 @@ function update(dt) {
     for (const e of enemies) {
       if (e.dying) continue;
       e.cd -= dt; const d = e.d, r = 0.6 * d.s;
-      const targets = [player, ...soldiers.filter(s => !s.dying)];
+      const targets = [...(player.dead ? [] : [player]), ...soldiers.filter(s => !s.dying)];
       const t = nearest(e, targets, 14);
       let tx, tz, moving = true, sp = d.speed * (inWater(e) && !d.swim ? 0.55 : 1);
       if (t) { tx = t.e.x; tz = t.e.z; } else { tx = KEEP.x - 3; tz = KEEP.z + e.tz; }
@@ -311,7 +319,8 @@ function update(dt) {
       waveActive = false; const b = 20 + wave * 5; gold += b;
       if (wave >= FINAL_WAVE) endGame(true); else say('Wave ' + wave + ' cleared. +' + b + ' gold. Press Enter for the next wave.');
     }
-    if (player.hp <= 0) endGame(false, 'You have fallen.'); else if (keepHp <= 0) endGame(false, 'The keep was overrun.');
+    if (player.hp <= 0 && !player.dead) { player.dead = true; player.respawn = 5; player.c.flash = 0; }
+    if (keepHp <= 0) endGame(false, 'The keep was overrun.');
   }
 
   // dying bodies fall over and vanish (also runs after game over)
@@ -324,7 +333,7 @@ function update(dt) {
   for (const f of effects) f.t -= dt;
   effects = effects.filter(f => { if (f.t <= 0) scene.remove(f.obj); return f.t > 0; });
 
-  if (state === 'dead') {
+  if (player.dead || state === 'dead') {
     player.c.root.rotation.x = Math.max(-Math.PI / 2, player.c.root.rotation.x - dt * 3);
   }
   // sync meshes
@@ -334,7 +343,7 @@ function update(dt) {
 }
 function endGame(won, why) {
   state = won ? 'won' : 'dead'; $('over').hidden = false;
-  $('overTitle').textContent = won ? 'VICTORY' : 'YOU DIED';
+  $('overTitle').textContent = won ? 'VICTORY' : 'KEEP LOST';
   $('overTitle').style.color = won ? '#7fe07f' : '#ff6b6b';
   $('overText').textContent = won ? 'You held the ground for ' + FINAL_WAVE + ' waves.' : why + ' You reached wave ' + wave + '.';
 }

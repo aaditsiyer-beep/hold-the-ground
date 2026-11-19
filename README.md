@@ -1,18 +1,18 @@
 # Hold the Ground
 
-A small terrain-shaping tower defense. Reshape the land to steer enemies, fight with your own sword, and hire soldiers and archers to defend the keep. You can die.
+A 3D third-person tower defense on realistic procedural terrain. You play a blocky character with a sword, hire blocky soldiers and archers, and hold the keep against waves of blocky enemies. You can die.
 
 ## Play
 
-Open `index.html` in a browser. No build step.
+Serve the folder (`python3 -m http.server 8000`) and open http://localhost:8000. Needs internet for Three.js from a CDN.
 
 ## Controls
 
-- WASD: move
-- Mouse: aim
-- Click or Space: swing sword
-- Shop buttons or keys 1-6: pick an item, then click a tile to place it
-- Esc: back to sword
+- WASD: move, Space: jump, right-drag or Q/E: turn camera
+
+- Click or F: swing sword
+- Keys 1-5 or shop buttons: soldier, archer, wall, sword upgrade, potion
+
 - Enter: start next wave
 - R: restart after death
 

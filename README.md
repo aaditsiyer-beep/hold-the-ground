@@ -1,24 +1,21 @@
 # Hold the Ground
 
-A 3D third-person tower defense on realistic procedural terrain. You play a blocky character with a sword, hire blocky soldiers and archers, and hold the keep against waves of blocky enemies. You can die.
+A first-person 3D tower defense on procedural terrain, with Roblox-style blocky characters. Defend your keep in the east, build banks, hire an army, and march on the enemy kingdom in the west.
 
 ## Play
 
-Serve the folder (`python3 -m http.server 8000`) and open http://localhost:8000. Needs internet for Three.js from a CDN.
+Serve the folder (`python3 -m http.server 8000`) and open http://localhost:8000. Needs internet to load Three.js from a CDN.
 
 ## Controls
 
-- WASD: move, Space: jump, right-drag or Q/E: turn camera
+- Arrow keys (or WASD): move. Space: jump.
+- Mouse: look (click the view to capture it, or hold right mouse and drag). Q/E also turn.
+- Click: sword combo (slash, backhand, overhead slam). Hold click then release: lunge. F: spin attack.
+- B: shop menu (pauses the game). T: army Defend / Attack.
 
-- Click or F: swing sword
-- Keys 1-5 or shop buttons: soldier, archer, wall, sword upgrade, potion
+## Rules
 
-- Enter: start next wave
-
-
-## Features
-
-- River, hill and wall terrain that reroutes and slows enemies
-- Soldiers and archers with no unit cap
-- Sword upgrades and healing potions
-- Four enemy types across 10 waves
+- Enemy houses keep producing soldiers. Destroy every house and the castle to win.
+- Banks earn 40 gold/s but enemies will attack them. Walls get chewed through.
+- You respawn at your keep when you die. The game ends only if the keep falls.
+- Greek and Norse gods (Zeus, Poseidon, Hades, Athena, Thor, Odin, Loki, Freya) cost $50,000 each.

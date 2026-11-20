@@ -20,14 +20,14 @@ body{box-sizing:border-box;display:flex;flex-direction:column;gap:6px;padding:8p
 button{background:var(--panel);color:var(--fg);border:2px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer;font-size:13px}
 button:hover:not(:disabled){border-color:var(--accent)}button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 button:disabled{opacity:.45;cursor:not-allowed}
-#shopMenu{position:absolute;inset:0;background:rgba(8,10,16,.78);display:flex;align-items:center;justify-content:center;padding:12px;cursor:default}
-#shopMenu[hidden],#over[hidden]{display:none}
+#shopMenu,#levelMenu{position:absolute;inset:0;background:rgba(8,10,16,.78);display:flex;align-items:center;justify-content:center;padding:12px;cursor:default}
+#shopMenu[hidden],#levelMenu[hidden],#over[hidden]{display:none}
 .panel{background:var(--panel);border:2px solid var(--line);border-radius:8px;max-width:760px;width:100%;max-height:100%;display:flex;flex-direction:column;overflow:hidden}
 .top{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line)}
 .top h2{margin:0;font-size:1.1rem;flex:1}
 #shopGold{color:var(--accent);font-variant-numeric:tabular-nums}
-#shopBody{overflow-y:auto;padding:4px 14px 14px}
-#shopBody h3{margin:14px 0 6px;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#shopBody,#levelBody{overflow-y:auto;padding:4px 14px 14px}
+#shopBody h3,#levelBody h3{margin:14px 0 6px;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .card.god{border-color:#8a7a3a}
@@ -38,15 +38,16 @@ button:disabled{opacity:.45;cursor:not-allowed}
 </style>
 </head><body>
 <div id="wrap">
-  <div id="hud"><div class="bar" title="Your health"><div id="hp"></div></div><div class="bar" title="Keep health"><div id="keep"></div></div><div id="stats"></div><div id="goal"></div></div>
+  <div id="hud"><div class="bar" title="Your health"><div id="hp"></div></div><div class="bar" title="Keep health"><div id="keep"></div></div><div id="lvl" style="font-weight:600"></div><div id="stats"></div><div id="goal"></div></div>
   <div id="cross"></div>
   <div id="charge"><div id="chargeBar"></div></div>
   <div id="hurt"></div>
   <div id="msg"></div>
-  <div id="bar"><button id="btnShop">Shop (B)</button><button id="btnArmy">Army: Defend (T)</button></div>
+  <div id="bar"><button id="btnShop">Shop (B)</button><button id="btnLevels">Levels</button><button id="btnArmy">Army: Defend (T)</button></div>
   <div id="shopMenu" hidden><div class="panel"><div class="top"><h2>Shop</h2><span id="shopGold"></span><button id="shopClose">Close (B)</button></div><div id="shopBody"></div></div></div>
+  <div id="levelMenu" hidden><div class="panel"><div class="top"><h2>Levels</h2><button id="levelClose">Close</button></div><div id="levelBody"></div></div></div>
   <div id="over" hidden><h1 id="overTitle"></h1><div id="overText"></div><button id="again">Play again (R)</button></div>
 </div>
-<div id="help">Arrow keys move · mouse looks (click to capture, or right-drag) · Q/E turn · Space jump · click: sword combo (slash, backhand, overhead slam) · hold click then release: lunge · F: spin attack · B: shop (pauses) · T: army defend/attack · Destroy every enemy house and the castle to win</div>
+<div id="help">Arrow keys move · mouse looks (click to capture, or right-drag) · Q/E turn · Space jump · click: sword combo (slash, backhand, overhead slam) · hold click then release: lunge · F: spin attack · B: shop (pauses) · Levels button: pick a level · T: army defend/attack · Destroy every enemy house and the castle to win</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="game.js"></script></body></html>

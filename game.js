@@ -1,7 +1,16 @@
 // Hold the Ground - first-person 3D. Blocky characters on procedural terrain. Needs THREE (r128).
-const KEEP = { x: 70, z: 0 }, BASE = { x: -78, z: 0 }, WATER = 0.4, HALF = 100, CAP = 45;
+const KEEP = { x: 70, z: 0 }, BASE = { x: -78, z: 0 }, WATER = 0.4, HALF = 100;
 const wrap = document.getElementById('wrap');
 const $ = id => document.getElementById(id);
+const LEVELS = [
+  { name: 'Green Valley', desc: 'Rolling hills and a river. A gentle start.', houses: 4, hp: 160, castle: 600, spawn: 18, cap: 25, pace: .6, hpMul: .8, gold: 500, seed: 10, amp: 20, river: 1, rshift: 0, sky: 0xbcd8ee, grass: 0x5b8f3c, sand: 0xb8a36a, rock: 0x80807a, water: 0x3a78c4, leaf: 0x2f6b32 },
+  { name: 'Whispering Woods', desc: 'Steeper ground and a river farther west.', houses: 5, hp: 200, castle: 900, spawn: 15, cap: 30, pace: .9, hpMul: 1, gold: 600, seed: 47, amp: 24, river: 1, rshift: 12, sky: 0xa8c4b0, grass: 0x3f7a3a, sand: 0x9a9060, rock: 0x6a6a60, water: 0x2e6a8a, leaf: 0x1f5a2a },
+  { name: 'Scorched Dunes', desc: 'Open desert. Runners arrive early.', houses: 6, hp: 240, castle: 1200, spawn: 13, cap: 35, pace: 1.1, hpMul: 1.15, gold: 800, seed: 83, amp: 14, river: .3, rshift: -8, sky: 0xf0d9a8, grass: 0xd9b872, sand: 0xcfa95a, rock: 0xa07050, water: 0x3a9aa8, leaf: 0x8a9a3a },
+  { name: 'Frozen Reach', desc: 'Snow and tough soldiers. Brutes show up sooner.', houses: 7, hp: 280, castle: 1600, spawn: 12, cap: 40, pace: 1.3, hpMul: 1.3, gold: 1000, seed: 121, amp: 26, river: 1, rshift: 6, sky: 0xdce8f4, grass: 0xe8eef2, sand: 0xc8d4dc, rock: 0x8a96a4, water: 0x6a9ad0, leaf: 0x5a8a78 },
+  { name: 'Ashen Highlands', desc: 'Volcanic ridges and a fast, crowded enemy.', houses: 8, hp: 320, castle: 2000, spawn: 10, cap: 48, pace: 1.6, hpMul: 1.5, gold: 1500, seed: 157, amp: 30, river: 1, rshift: -10, sky: 0x6a4a46, grass: 0x4a4040, sand: 0x3a3030, rock: 0x2a2525, water: 0xc04a1a, leaf: 0x3a2a2a },
+  { name: "Gods' End", desc: 'Ten houses, a vast castle and relentless waves.', houses: 10, hp: 400, castle: 3000, spawn: 8, cap: 60, pace: 2, hpMul: 1.8, gold: 3000, seed: 199, amp: 24, river: 1, rshift: 0, sky: 0xd8c8f0, grass: 0x7a6aa0, sand: 0xb0a0c8, rock: 0x5a5070, water: 0xb080ff, leaf: 0x5a3a8a },
+];
+let LV = LEVELS[0], levelIdx = 0, snap = null;
 const fmt = n => Math.floor(n).toLocaleString('en-US');
 
 // ---------- terrain ----------
@@ -13,12 +22,12 @@ function vnoise(x, z) {
   return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
 }
 function fbm(x, z) { let s = 0, a = .5, f = 1; for (let o = 0; o < 4; o++) { s += vnoise(x * f, z * f) * a; a *= .5; f *= 2; } return s; }
-const riverX = z => -15 + Math.sin(z * 0.045) * 18;
+const riverX = z => -15 + LV.rshift + Math.sin(z * 0.045) * 18;
 function heightAt(x, z) {
-  let h = (fbm(x * 0.02 + 10, z * 0.02 + 10) - 0.45) * 22;
+  let h = (fbm(x * 0.02 + LV.seed, z * 0.02 + LV.seed) - 0.45) * LV.amp;
   const kf = Math.max(0, 1 - Math.hypot(x - KEEP.x, z - KEEP.z) / 35); h = h * (1 - kf) + 2 * kf;
   const sf = Math.max(0, 1 - Math.hypot(x - BASE.x, z) / 36); h = h * (1 - sf) + 2 * sf;
-  const rd = x - riverX(z), rf = Math.exp(-(rd * rd) / 40); h = h * (1 - rf) + (-1.2) * rf;
+  const rd = x - riverX(z), rf = Math.exp(-(rd * rd) / 40) * LV.river; h = h * (1 - rf) + (-1.2) * rf;
   return h;
 }
 
@@ -40,7 +49,11 @@ scene.add(sun, sun.target);
 const lam = (col, o) => new THREE.MeshLambertMaterial(Object.assign({ color: col }, o));
 function boxMesh(w, h, d, m, x, y, z, parent) { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; b.receiveShadow = true; if (parent) parent.add(b); return b; }
 
-(function buildTerrain() {
+let world = null;
+function buildTerrain() {
+  if (world) { scene.remove(world); world.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
+  world = new THREE.Group(); scene.add(world);
+  scene.background = new THREE.Color(LV.sky); scene.fog.color.set(LV.sky);
   const g = new THREE.PlaneGeometry(200, 200, 140, 140); g.rotateX(-Math.PI / 2);
   const p = g.attributes.position;
   for (let i = 0; i < p.count; i++) p.setY(i, heightAt(p.getX(i), p.getZ(i)));
@@ -48,16 +61,16 @@ function boxMesh(w, h, d, m, x, y, z, parent) { const b = new THREE.Mesh(new THR
   const n = g.attributes.normal, col = new Float32Array(p.count * 3), c = new THREE.Color();
   for (let i = 0; i < p.count; i++) {
     const h = p.getY(i), slope = 1 - n.getY(i), v = hash(p.getX(i) * 3, p.getZ(i) * 3) * 0.08;
-    if (h < WATER + 0.5) c.set(0xb8a36a); else if (slope > 0.22 || h > 9) c.set(0x80807a); else c.set(0x5b8f3c);
+    if (h < WATER + 0.5) c.set(LV.sand); else if (slope > 0.22 || h > 9) c.set(LV.rock); else c.set(LV.grass);
     c.offsetHSL(0, 0, v - 0.04); col.set([c.r, c.g, c.b], i * 3);
   }
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true })); m.receiveShadow = true; scene.add(m);
-  const w = new THREE.Mesh(new THREE.PlaneGeometry(200, 200).rotateX(-Math.PI / 2), lam(0x3a78c4, { transparent: true, opacity: 0.72 }));
-  w.position.y = WATER; scene.add(w);
+  const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true })); m.receiveShadow = true; world.add(m);
+  const w = new THREE.Mesh(new THREE.PlaneGeometry(200, 200).rotateX(-Math.PI / 2), lam(LV.water, { transparent: true, opacity: 0.72 }));
+  w.position.y = WATER; world.add(w);
 
   const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.3, 0.4, 2.4, 6), lam(0x6b4a2b), 260);
-  const leaf = new THREE.InstancedMesh(new THREE.ConeGeometry(1.8, 4.6, 7), lam(0x2f6b32), 260);
+  const leaf = new THREE.InstancedMesh(new THREE.ConeGeometry(1.8, 4.6, 7), lam(LV.leaf), 260);
   const rock = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), lam(0x8a8a85), 70);
   const d = new THREE.Object3D(); let nt = 0, nr = 0;
   for (let k = 0; k < 1800 && (nt < 260 || nr < 70); k++) {
@@ -73,8 +86,8 @@ function boxMesh(w, h, d, m, x, y, z, parent) { const b = new THREE.Mesh(new THR
     }
   }
   trunk.count = nt; leaf.count = nt; rock.count = nr;
-  for (const o of [trunk, leaf, rock]) { o.castShadow = true; o.receiveShadow = true; scene.add(o); }
-})();
+  for (const o of [trunk, leaf, rock]) { o.castShadow = true; o.receiveShadow = true; world.add(o); }
+}
 
 // ---------- buildings ----------
 function meshMats(mesh) { const a = []; mesh.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => a.push(m)); }); return a; }
@@ -219,21 +232,25 @@ function clearAll() {
   for (const f of effects || []) scene.remove(f.obj);
   for (const s of sinkers || []) scene.remove(s.mesh);
 }
-function init() {
-  clearAll();
+const HOUSES = [[-62, 0], [-66, -12], [-66, 12], [-74, -21], [-74, 21], [-56, -14], [-56, 14], [-90, -14], [-90, 14], [-84, -27]];
+function startLevel(idx, carry) {
+  levelIdx = idx; LV = LEVELS[idx]; clearAll(); buildTerrain();
   const px = KEEP.x - 14;
   player = { x: px, z: 0, y: heightAt(px, 0), vy: 0, hp: 100, max: 100, hurt: 0, dead: false, respawn: 0, swing: null, combo: 0, comboT: 0, spinCd: 0, dash: 0 };
   enemies = []; soldiers = []; effects = []; sinkers = []; structs = []; eBuild = [];
   structs.push(makeStruct('keep', KEEP.x + 3, KEEP.z, 6, 1500, makeKeepMesh()));
-  const HOUSES = [[-62, 0], [-66, -12], [-66, 12], [-74, -21], [-74, 21], [-90, -14], [-90, 14]];
-  for (const [x, z] of HOUSES) eBuild.push(makeStruct('house', x, z, 3.2, 160, makeHouseMesh(), { t: 8 + Math.random() * 8 }));
-  eBuild.push(makeStruct('castle', BASE.x - 4, 0, 8, 800, makeCastleMesh(), { t: 45 }));
+  for (const [x, z] of HOUSES.slice(0, LV.houses)) eBuild.push(makeStruct('house', x, z, 3.2, LV.hp, makeHouseMesh(), { t: 8 + Math.random() * 8 }));
+  eBuild.push(makeStruct('castle', BASE.x - 4, 0, 8, LV.castle, makeCastleMesh(), { t: 45 }));
   for (const b of eBuild) b.mesh.rotation.y = Math.PI / 2;
-  gold = 500; swordLvl = 0; gameT = 0; army = 'defend'; state = 'play';
+  gold = carry ? carry.gold : LV.gold; swordLvl = carry ? carry.sword : 0; gameT = 0; army = 'defend'; state = 'play';
+  if (carry) carry.army.forEach((sp, i) => addSoldier(sp, px + 4 + (i % 4) * 2.5, -6 + Math.floor(i / 4) * 2.5 + (i % 4)));
+  snap = { gold, sword: swordLvl, army: soldiers.map(q => q.spec) };
   yaw = -Math.PI / 2; pitch = 0; charging = false; chargeT = 0; queued = false;
-  setShop(false); $('over').hidden = true; $('btnArmy').textContent = 'Army: Defend (T)';
-  say('The enemy kingdom is to the west. Press B for the shop. Click the view to look around with the mouse.');
+  setShop(false); setLevels(false); $('over').hidden = true; $('btnArmy').textContent = 'Army: Defend (T)';
+  $('lvl').textContent = 'Level ' + (idx + 1) + '/' + LEVELS.length + ': ' + LV.name;
+  say(LV.name + '. The enemy kingdom is to the west. Press B for the shop. Click the view to look with the mouse.');
 }
+let overAction = () => startLevel(levelIdx, snap);
 
 const dist2 = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const nearest = (from, list, max) => { let b = null, bd = max; for (const e of list) { if (e.dying) continue; const d = Math.hypot(e.x - from.x, e.z - from.z); if (d < bd) { bd = d; b = e; } } return b && { e: b, d: bd }; };
@@ -321,8 +338,24 @@ function renderShop() {
     card.append(t, d, b); grid.appendChild(card);
   }
 }
+function setLevels(open) {
+  shopOpen = open; $('levelMenu').hidden = !open;
+  if (open) { try { document.exitPointerLock(); } catch (e) {} renderLevels(); charging = false; $('shopMenu').hidden = true; }
+}
+function unlocked() { try { return Math.max(0, +localStorage.getItem('htg_unlocked') || 0); } catch (e) { return 0; } }
+function unlock(n) { try { if (n > unlocked()) localStorage.setItem('htg_unlocked', n); } catch (e) {} }
+function renderLevels() {
+  const body = $('levelBody'); body.innerHTML = ''; const open = unlocked(); const grid = document.createElement('div'); grid.className = 'grid'; body.appendChild(grid);
+  LEVELS.forEach((L, i) => {
+    const card = document.createElement('div'); card.className = 'card' + (i === levelIdx ? ' god' : '');
+    const t = document.createElement('div'); t.className = 't'; t.textContent = (i + 1) + '. ' + L.name;
+    const d = document.createElement('div'); d.className = 'd'; d.textContent = L.desc + ' ' + L.houses + ' houses.';
+    const b = document.createElement('button'); b.textContent = i > open ? 'Locked' : i === levelIdx ? 'Restart' : 'Play'; b.disabled = i > open;
+    b.onclick = () => startLevel(i); card.append(t, d, b); grid.appendChild(card);
+  });
+}
 function setShop(open) {
-  shopOpen = open; $('shopMenu').hidden = !open;
+  shopOpen = open; $('shopMenu').hidden = !open; if (open) $('levelMenu').hidden = true;
   if (open) { try { document.exitPointerLock(); } catch (e) {} renderShop(); charging = false; }
 }
 function placeAhead(dist) { return { x: Math.max(-HALF, Math.min(HALF, player.x + Math.sin(yaw) * dist)), z: Math.max(-HALF, Math.min(HALF, player.z + Math.cos(yaw) * dist)) }; }
@@ -338,28 +371,36 @@ function buy(id) {
     const s = makeStruct(id, p.x, p.z, r, bank ? 200 : 100, m); if (!bank) m.rotation.y = yaw;
     structs.push(s);
   } else if (id === 'soldier' || id === 'archer') {
-    const x = player.x + Math.sin(yaw) * 4 + (Math.random() - .5) * 3, z = player.z + Math.cos(yaw) * 4 + (Math.random() - .5) * 3, ranged = id === 'archer';
-    soldiers.push({ x, z, y: heightAt(x, z), hp: ranged ? 35 : 60, max: ranged ? 35 : 60, cd: 0, ranged, dying: 0, speed: 6,
-      c: makeChar(ranged ? { shirt: 0x3fa55b, pants: 0x2a4a30, weapon: 'bow' } : { shirt: 0x4a8ae0, pants: 0x1c2e63, weapon: 'sword' }) });
+    addSoldier({ t: id }, player.x + Math.sin(yaw) * 4 + (Math.random() - .5) * 3, player.z + Math.cos(yaw) * 4 + (Math.random() - .5) * 3);
   } else if (it.god) {
     const g = it.god, x = player.x + Math.sin(yaw) * 5, z = player.z + Math.cos(yaw) * 5;
-    soldiers.push({ x, z, y: heightAt(x, z), hp: 1500, max: 1500, cd: 0, ranged: GOD_RANGE[g.kind] > 5, dying: 0, speed: 7, god: g,
-      c: makeChar({ shirt: g.shirt, pants: g.pants, weapon: g.weapon, wcol: g.wcol, s: 2.4, halo: g.col, glow: (g.col >> 1) & 0x7f7f7f }) });
-    shock(x, z, 8, g.col); flashMsg(g.name + ' joins your army!');
+    addSoldier({ t: 'god', id: g.id }, x, z); shock(x, z, 8, g.col); flashMsg(g.name + ' joins your army!');
   } else if (id === 'upgrade') { swordLvl++; flashMsg('Sword sharpened (Lv ' + swordLvl + ')'); }
   else if (id === 'potion') { player.hp = Math.min(player.max, player.hp + 50); flashMsg('Healed'); }
   gold -= c;
+}
+function addSoldier(spec, x, z) {
+  const y = heightAt(x, z);
+  if (spec.t === 'god') {
+    const g = GODS.find(q => q.id === spec.id);
+    soldiers.push({ spec, x, z, y, hp: 1500, max: 1500, cd: 0, ranged: GOD_RANGE[g.kind] > 5, dying: 0, speed: 7, god: g,
+      c: makeChar({ shirt: g.shirt, pants: g.pants, weapon: g.weapon, wcol: g.wcol, s: 2.4, halo: g.col, glow: (g.col >> 1) & 0x7f7f7f }) });
+  } else {
+    const ranged = spec.t === 'archer';
+    soldiers.push({ spec, x, z, y, hp: ranged ? 35 : 60, max: ranged ? 35 : 60, cd: 0, ranged, dying: 0, speed: 6,
+      c: makeChar(ranged ? { shirt: 0x3fa55b, pants: 0x2a4a30, weapon: 'bow' } : { shirt: 0x4a8ae0, pants: 0x1c2e63, weapon: 'sword' }) });
+  }
 }
 function setArmy(a) { army = a; $('btnArmy').textContent = 'Army: ' + (a === 'defend' ? 'Defend' : 'Attack') + ' (T)'; flashMsg(a === 'attack' ? 'Your army marches on the enemy kingdom.' : 'Your army holds the line.'); }
 
 // ---------- enemies and gods ----------
 function spawnEnemy(x, z, type) {
   const d = ENEMY[type];
-  enemies.push({ type, d, x, z, y: heightAt(x, z), hp: d.hp, max: d.hp, cd: 0, tz: (Math.random() - .5) * 10, dying: 0, c: makeChar({ shirt: d.shirt, pants: d.pants, s: d.s, skin: d.skin }) });
+  enemies.push({ type, d, x, z, y: heightAt(x, z), hp: d.hp * LV.hpMul, max: d.hp * LV.hpMul, cd: 0, tz: (Math.random() - .5) * 10, dying: 0, c: makeChar({ shirt: d.shirt, pants: d.pants, s: d.s, skin: d.skin }) });
 }
 function pickType() {
-  const r = Math.random();
-  if (gameT > 240 && r < .12) return 'brute'; if (gameT > 120 && r < .3) return 'swimmer'; if (gameT > 60 && r < .5) return 'runner'; return 'grunt';
+  const r = Math.random(), t = gameT * LV.pace;
+  if (t > 240 && r < .12) return 'brute'; if (t > 120 && r < .3) return 'swimmer'; if (t > 60 && r < .5) return 'runner'; return 'grunt';
 }
 function godAttack(s, t, isB) {
   const g = s.god, k = g.kind, tx = t.x, tz = t.z, ty = (t.y || heightAt(tx, tz)) + 2;
@@ -390,7 +431,7 @@ function destroyStruct(b, enemySide) {
   const list = enemySide ? eBuild : structs; list.splice(list.indexOf(b), 1);
   sinkers.push({ mesh: b.mesh, t: 1.2 });
   if (enemySide) {
-    const rw = b.type === 'castle' ? 10000 : 2500; gold += rw;
+    const rw = b.type === 'castle' ? 10000 + levelIdx * 2000 : 2500 + levelIdx * 500; gold += rw;
     flashMsg((b.type === 'castle' ? 'Enemy castle destroyed' : 'Enemy house destroyed') + '. +' + fmt(rw) + ' gold');
   } else flashMsg('Your ' + b.type + ' was destroyed!');
 }
@@ -428,13 +469,13 @@ function update(dt) {
       player.moving = moving;
     }
     // enemy houses spawn soldiers
-    const rate = 1 + gameT / 240;
+    const rate = 1 + gameT / 240 * LV.pace;
     for (const b of eBuild) {
       if (!alive(b)) continue;
       b.t -= dt * rate;
       if (b.t <= 0) {
-        if (b.type === 'house') { if (enemies.length < CAP) spawnEnemy(b.x + 3.5, b.z + (Math.random() - .5) * 4, pickType()); b.t = 14 + Math.random() * 6; }
-        else { if (enemies.length < CAP) spawnEnemy(b.x + 6, b.z, 'brute'); b.t = 35; }
+        if (b.type === 'house') { if (enemies.length < LV.cap) spawnEnemy(b.x + 3.5, b.z + (Math.random() - .5) * 4, pickType()); b.t = LV.spawn + Math.random() * 6; }
+        else { if (enemies.length < LV.cap) spawnEnemy(b.x + 6, b.z, 'brute'); b.t = LV.spawn * 2.4; }
       }
     }
     // enemies
@@ -510,9 +551,18 @@ function update(dt) {
 }
 function endGame(won, why) {
   state = won ? 'won' : 'lost'; $('over').hidden = false;
-  $('overTitle').textContent = won ? 'VICTORY' : 'KEEP LOST';
+  const last = levelIdx === LEVELS.length - 1, mins = Math.floor(gameT / 60);
+  $('overTitle').textContent = won ? (last ? 'YOU WIN' : 'LEVEL CLEARED') : 'KEEP LOST';
   $('overTitle').style.color = won ? '#7fe07f' : '#ff6b6b';
-  $('overText').textContent = won ? 'The enemy kingdom has fallen after ' + Math.floor(gameT / 60) + ' minutes.' : why + ' You lasted ' + Math.floor(gameT / 60) + ' minutes.';
+  if (won) {
+    unlock(levelIdx + 1);
+    $('overText').textContent = LV.name + ' has fallen after ' + mins + ' min.' + (last ? ' Every kingdom is yours.' : ' Your gold, sword level and army come with you.');
+    $('again').textContent = last ? 'Play again from level 1 (R)' : 'Next level (R)';
+    overAction = last ? () => startLevel(0) : () => startLevel(levelIdx + 1, { gold: Math.floor(gold), sword: swordLvl, army: soldiers.filter(q => !q.dying).map(q => q.spec) });
+  } else {
+    $('overText').textContent = why + ' You lasted ' + mins + ' min.';
+    $('again').textContent = 'Retry level (R)'; overAction = () => startLevel(levelIdx, snap);
+  }
 }
 function updateViewmodel(dt) {
   vm.visible = !player.dead;
@@ -551,7 +601,7 @@ function render() {
   if (tgt) {
     let rel = Math.atan2(tgt.e.x - player.x, tgt.e.z - player.z) - yaw; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
     const a = Math.abs(rel) < Math.PI / 4 ? '↑' : Math.abs(rel) > 3 * Math.PI / 4 ? '↓' : rel > 0 ? '←' : '→';
-    $('goal').textContent = 'Enemy kingdom ' + a + ' ' + Math.round(tgt.d) + ' m   Houses ' + houses + '/7   Castle ' + (castle ? 'standing' : 'down');
+    $('goal').textContent = 'Enemy kingdom ' + a + ' ' + Math.round(tgt.d) + ' m   Houses ' + houses + '/' + LV.houses + '   Castle ' + (castle ? 'standing' : 'down');
   }
   $('hurt').style.opacity = player.hurt > 0 ? 0.35 : 0;
   $('chargeBar').parentElement.style.opacity = charging && chargeT > 0.12 ? 1 : 0;
@@ -582,22 +632,24 @@ window.addEventListener('mousemove', e => {
 window.addEventListener('keydown', e => {
   const k = e.key.toLowerCase(); keys[k] = true;
   if (k === ' ' || k.startsWith('arrow')) e.preventDefault();
-  if (k === 'b' && state === 'play') setShop(!shopOpen);
-  if (k === 'escape' && shopOpen) setShop(false);
+  if (k === 'b' && state === 'play' && $('levelMenu').hidden) setShop(!shopOpen);
+  if (k === 'escape' && shopOpen) { setShop(false); setLevels(false); }
   if (shopOpen) return;
   if (k === 't' && state === 'play') setArmy(army === 'defend' ? 'attack' : 'defend');
   if (k === 'f' && player.spinCd <= 0 && !player.swing && !player.dead && state === 'play') { startSwing('spin'); player.spinCd = 1.5; }
-  if (k === 'r' && state !== 'play') init();
+  if (k === 'r' && state !== 'play') overAction();
 });
 window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 $('btnShop').onclick = () => { if (state === 'play') setShop(!shopOpen); };
 $('btnArmy').onclick = () => { if (state === 'play') setArmy(army === 'defend' ? 'attack' : 'defend'); };
 $('shopClose').onclick = () => setShop(false);
-$('again').onclick = init;
+$('again').onclick = () => overAction();
+$('btnLevels').onclick = () => setLevels($('levelMenu').hidden);
+$('levelClose').onclick = () => setLevels(false);
 
 function resize() { const w = wrap.clientWidth, h = wrap.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 new ResizeObserver(resize).observe(wrap); resize();
 
 let last = performance.now();
 function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; update(dt); render(); requestAnimationFrame(loop); }
-init(); requestAnimationFrame(loop);
+startLevel(0); requestAnimationFrame(loop);

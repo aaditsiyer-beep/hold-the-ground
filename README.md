@@ -17,6 +17,6 @@ Serve the folder (`python3 -m http.server 8000`) and open http://localhost:8000.
 
 - Six levels, each with its own terrain and biome (valley, woods, desert, snow, volcanic, final). Later levels have more houses, tougher and faster enemies.
 - Enemy houses keep producing soldiers. Destroy every house and the castle to win a level. Your gold, sword level and surviving army carry to the next level.
-- Banks earn 40 gold/s but enemies will attack them. Walls get chewed through.
+- Banks earn 40 gold/s. Houses ($250) make a free soldier every 20 s (4 per house). Enemies attack banks, houses and walls. Walls get chewed through.
 - You respawn at your keep when you die. The game ends only if the keep falls.
 - Greek and Norse gods (Zeus, Poseidon, Hades, Athena, Thor, Odin, Loki, Freya) cost $50,000 each.

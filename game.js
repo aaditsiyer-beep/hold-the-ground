@@ -61,6 +61,8 @@ scene.add(sun, sun.target);
 const lam = (col, o) => new THREE.MeshLambertMaterial(Object.assign({ color: col }, o));
 function boxMesh(w, h, d, m, x, y, z, parent) { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; b.receiveShadow = true; if (parent) parent.add(b); return b; }
 
+function cylM(rt, rb, h, m, x, y, z, par, seg) { const q = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 12), m); q.position.set(x, y, z); q.castShadow = true; par.add(q); return q; }
+function sphM(r, m, x, y, z, par, sx, sy, sz) { const q = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 9), m); q.position.set(x, y, z); q.scale.set(sx || 1, sy || 1, sz || 1); q.castShadow = true; par.add(q); return q; }
 let world = null;
 function buildTerrain() {
   if (world) { scene.remove(world); world.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
@@ -144,24 +146,48 @@ function makeStruct(type, x, z, r, hp, mesh, extra) {
 }
 
 // ---------- blocky characters ----------
-function faceMat(skin) {
-  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
-  g.fillStyle = '#' + skin.toString(16).padStart(6, '0'); g.fillRect(0, 0, 64, 64);
-  g.fillStyle = '#222'; g.fillRect(18, 20, 6, 11); g.fillRect(40, 20, 6, 11);
-  g.strokeStyle = '#222'; g.lineWidth = 4; g.beginPath(); g.arc(32, 34, 14, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
-  return new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(c) });
+function faceMat(o) {
+  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.clearRect(0, 0, 128, 128);
+  const ey = 54;
+  if (o.pretty) {
+    g.fillStyle = 'rgba(255,120,140,0.35)'; g.beginPath(); g.arc(30, 78, 10, 0, 7); g.arc(98, 78, 10, 0, 7); g.fill();
+    for (const x of [40, 88]) {
+      g.fillStyle = '#fff'; g.beginPath(); g.ellipse(x, ey, 11, 13, 0, 0, 7); g.fill();
+      g.fillStyle = '#' + (o.eyes || 0x3a7a5a).toString(16).padStart(6, '0'); g.beginPath(); g.ellipse(x, ey + 1, 8, 11, 0, 0, 7); g.fill();
+      g.fillStyle = '#111'; g.beginPath(); g.arc(x, ey + 1, 4.5, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(x - 3, ey - 3, 2.6, 0, 7); g.fill();
+    }
+    g.strokeStyle = '#2a1a14'; g.lineWidth = 3.5; g.lineCap = 'round'; g.beginPath();
+    g.moveTo(27, ey - 6); g.quadraticCurveTo(40, ey - 20, 53, ey - 8); g.moveTo(75, ey - 8); g.quadraticCurveTo(88, ey - 20, 101, ey - 6);
+    g.moveTo(27, ey - 5); g.lineTo(20, ey - 12); g.moveTo(101, ey - 5); g.lineTo(108, ey - 12); g.stroke();
+    g.fillStyle = '#c8344a'; g.beginPath(); g.ellipse(64, 94, 12, 6, 0, 0, 7); g.fill();
+    g.strokeStyle = '#8a2030'; g.lineWidth = 2.5; g.beginPath(); g.arc(64, 90, 13, 0.18 * Math.PI, 0.82 * Math.PI); g.stroke();
+  } else {
+    g.fillStyle = '#222'; g.beginPath(); g.ellipse(40, ey, 7, 11, 0, 0, 7); g.ellipse(88, ey, 7, 11, 0, 0, 7); g.fill();
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(42, ey - 4, 2.6, 0, 7); g.arc(90, ey - 4, 2.6, 0, 7); g.fill();
+    g.strokeStyle = '#222'; g.lineWidth = 5; g.lineCap = 'round';
+    if (o.angry) { g.beginPath(); g.moveTo(24, ey - 18); g.lineTo(54, ey - 9); g.moveTo(104, ey - 18); g.lineTo(74, ey - 9); g.stroke(); g.beginPath(); g.arc(64, 106, 16, 1.15 * Math.PI, 1.85 * Math.PI); g.stroke(); }
+    else { g.beginPath(); g.arc(64, 74, 22, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke(); }
+  }
+  return new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(c), transparent: true });
 }
 function makeChar(o) {
   const mats = [], L = col => { const m = lam(col); mats.push(m); return m; };
   const root = new THREE.Group(), skin = o.skin ?? 0xf2d03b;
   const bx = (w, h, d, m, x, y, z, par) => boxMesh(w, h, d, m, x, y, z, par);
-  bx(1.6, 1.8, 0.8, L(o.shirt), 0, 2.5, 0, root);
-  const fm = faceMat(skin), sm = L(skin); mats.push(fm);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), [sm, sm, sm, sm, fm, sm]); head.position.y = 4; head.castShadow = true; root.add(head);
-  const limb = (w, h, m, x, y) => { const p = new THREE.Group(); p.position.set(x, y, 0); bx(w, h, w, m, 0, -h / 2, 0, p); root.add(p); return p; };
-  const pm = L(o.pants), am = L(skin);
-  const legL = limb(0.75, 1.6, pm, -0.4, 1.6), legR = limb(0.75, 1.6, pm, 0.4, 1.6);
-  const armL = limb(0.7, 1.6, am, -1.15, 3.3), armR = limb(0.7, 1.6, am, 1.15, 3.3);
+  const sm = L(skin), am = L(skin), pm = L(o.pants), shirtM = L(o.shirt), hairM = L(o.hair ?? 0x5a3a22), shoeM = L(0x2a2420);
+  cylM(0.78, 0.62, 1.8, shirtM, 0, 2.5, 0, root, 12).scale.z = 0.72;              // rounded torso
+  cylM(0.66, 0.66, 0.18, L(0x4a3a2a), 0, 1.72, 0, root, 12).scale.z = 0.76;       // belt
+  cylM(0.2, 0.24, 0.35, sm, 0, 3.5, 0, root, 8);                                  // neck
+  sphM(0.62, sm, 0, 4.02, 0, root, 1, 1.06, 1);                                    // round head
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.66, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.56), hairM); cap.position.set(0, 4.06, -0.04); cap.castShadow = true; root.add(cap);
+  const fm = faceMat(o); mats.push(fm);
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.0), fm); plane.position.set(0, 3.98, 0.6); root.add(plane);
+  const leg = x => { const p = new THREE.Group(); p.position.set(x, 1.6, 0); cylM(0.36, 0.3, 1.5, pm, 0, -0.75, 0, p, 10); sphM(0.34, shoeM, 0, -1.5, 0.12, p, 1, 0.6, 1.5); root.add(p); return p; };
+  const arm = x => {
+    const p = new THREE.Group(); p.position.set(x, 3.3, 0); sphM(0.4, shirtM, 0, 0, 0, p); cylM(0.35, 0.3, 0.85, shirtM, 0, -0.45, 0, p, 10);
+    cylM(0.28, 0.25, 0.8, am, 0, -1.15, 0, p, 10); sphM(0.3, am, 0, -1.55, 0, p); root.add(p); return p;
+  };
+  const legL = leg(-0.4), legR = leg(0.4), armL = arm(-1.1), armR = arm(1.1);
   const wc = o.wcol ?? 0xd9dde3; let bowG = null;
   if (o.weapon === 'sword') { bx(0.22, 0.22, 2.6, L(wc), 0, -1.5, 1.2, armR); bx(0.7, 0.18, 0.18, L(0x6b4a2b), 0, -1.5, 0.1, armR); }
   else if (o.weapon === 'bow') {
@@ -237,8 +263,28 @@ function godGear(id, root, armL, L) {
     cape(0x14101c); b(0.5, 0.15, 0.1, glow(0xa040ff), -0.28, 4.15, 0.62); b(0.5, 0.15, 0.1, glow(0xa040ff), 0.28, 4.15, 0.62);
     for (const [x, h] of [[-0.5, 0.9], [-0.17, 1.4], [0.17, 1.1], [0.5, 0.8]]) b(0.28, h, 0.28, glow(h > 1 ? 0xd07aff : 0x7a2aff), x, 4.6 + h / 2, 0);
   } else if (id === 'athena') {
-    cape(0xe8e8f0); b(1.35, 0.55, 1.35, L(0xc8d0dc), 0, 4.7, 0); b(0.22, 0.75, 1.5, L(0xc0262d), 0, 5.2, 0);
-    b(0.16, 1.9, 1.5, L(0xc8d0dc), -0.45, -1.0, 0.5, armL); b(0.2, 0.7, 0.7, L(0xffd24a), -0.55, -1.0, 0.5, armL);
+    const white = L(0xf6f6fa), gold = lam(0xe8c050, { emissive: 0x3a2a05 }), silver = lam(0xcdd5e2, { emissive: 0x1a1f28 }), hair = L(0x4a2c1a), red = L(0xc0262d);
+    sphM(0.85, hair, 0, 3.3, -0.5, root, 0.9, 1.75, 0.5);                       // long hair down her back
+    cylM(0.86, 1.3, 2.1, white, 0, 1.5, 0, root, 14);                           // flowing chiton
+    const belt = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.08, 6, 20), gold); belt.rotation.x = Math.PI / 2; belt.position.y = 2.3; root.add(belt);
+    sphM(0.5, silver, 0, 3.0, 0.15, root, 1.1, 0.7, 0.6); sphM(0.14, gold, 0, 3.0, 0.56, root);   // aegis and medallion
+    for (const x of [-0.8, 0.8]) sphM(0.2, gold, x, 3.55, 0, root);
+    const helm = new THREE.Mesh(new THREE.SphereGeometry(0.72, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.56), silver); helm.position.set(0, 4.08, -0.04); helm.castShadow = true; root.add(helm);
+    for (const x of [-0.6, 0.6]) sphM(0.2, silver, x, 3.8, 0.15, root, 0.5, 1.3, 0.8);
+    for (const [y, z, r] of [[4.95, 0.45, 0.2], [5.1, 0.2, 0.24], [5.15, -0.08, 0.26], [5.08, -0.35, 0.24], [4.92, -0.6, 0.2]]) sphM(r, red, 0, y, z, root);
+    const sh = cylM(0.95, 0.95, 0.14, silver, -0.4, -1.0, 0.6, armL, 20); sh.rotation.x = Math.PI / 2;
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.07, 6, 24), gold); rim.position.set(-0.4, -1.0, 0.6); armL.add(rim);
+    sphM(0.3, gold, -0.4, -1.0, 0.72, armL); sphM(0.14, lam(0x4a8ae0, { emissive: 0x2a5aa0 }), -0.4, -1.0, 0.95, armL);
+  } else if (id === 'freya') {
+    const gold = L(0xf0c860), pink = L(0xf08ab4), petal = L(0xffe0ee), lilac = lam(0xe6c8ff, { transparent: true, opacity: 0.7 }), gl = lam(0xffd0e8, { emissive: 0xffa0cc });
+    sphM(0.95, gold, 0, 3.0, -0.5, root, 0.95, 2.1, 0.55);                      // very long golden hair
+    for (const x of [-0.62, 0.62]) sphM(0.25, gold, x, 3.3, 0.22, root, 0.7, 2.0, 0.7);
+    cylM(0.84, 1.6, 2.2, pink, 0, 1.4, 0, root, 14); cylM(0.9, 1.75, 2.0, lilac, 0, 1.3, 0, root, 14);   // gown with sheer overlay
+    const belt = new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.08, 6, 20), L(0xf0c860)); belt.rotation.x = Math.PI / 2; belt.position.y = 2.3; root.add(belt);
+    for (let k = 0; k < 9; k++) { const a = k / 9 * Math.PI * 2; sphM(0.13, k % 2 ? petal : pink, Math.cos(a) * 0.62, 4.5 + Math.sin(k) * 0.03, Math.sin(a) * 0.62, root); }   // flower crown
+    const neck = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.05, 6, 18), gl); neck.rotation.x = Math.PI / 2; neck.position.y = 3.42; root.add(neck);
+    sphM(0.15, lam(0xffb040, { emissive: 0xff8a00 }), 0, 3.3, 0.45, root);   // Brisingamen
+    for (const side of [-1, 1]) for (let k = 0; k < 5; k++) { const f = sphM(0.2, gl, side * (0.85 + k * 0.3), 3.55 - k * 0.12, -0.75, root, 0.35, 1.3 - k * 0.1, 0.12); f.rotation.z = -side * (0.5 + k * 0.2); }   // feathered wings
   } else if (id === 'thor') {
     cape(0xb02828); b(1.35, 0.5, 1.35, L(0x9aa4b0), 0, 4.7, 0); b(1.1, 0.8, 0.25, L(0xe0c060), 0, 3.5, 0.62);
     b(0.15, 0.9, 0.5, L(0xffffff), -0.8, 5.1, 0, undefined, 0.5); b(0.15, 0.9, 0.5, L(0xffffff), 0.8, 5.1, 0, undefined, -0.5);
@@ -251,10 +297,7 @@ function godGear(id, root, armL, L) {
     cape(0x143a22); b(1.35, 0.45, 1.35, L(0x2a8a4a), 0, 4.7, 0);
     b(0.2, 1.1, 0.2, L(0xffd24a), -0.75, 5.2, 0, undefined, 0.5); b(0.2, 1.1, 0.2, L(0xffd24a), 0.75, 5.2, 0, undefined, -0.5);
     b(0.5, 0.1, 0.1, L(0x111111), 0, 3.55, 0.62);
-  } else if (id === 'freya') {
-    b(1.4, 2.0, 0.3, L(0xe8c050), 0, 3.6, -0.55); b(1.35, 0.3, 1.35, L(0xe8c050), 0, 4.7, 0);
-    for (const x of [-1, 1]) b(0.1, 1.9, 1.6, glow(0xffd0e8), x * 1.5, 2.8, -0.9).rotation.y = x * 0.6;
-    b(0.4, 0.4, 0.12, glow(0xff9fcf), 0, 3.4, 0.45);
+
   }
 }
 function animChar(c, dt, moving, sp, swim) {
@@ -318,14 +361,14 @@ const ENEMY = {
   brute:   { hp: 180, speed: 3,   dmg: 20, reward: 60, shirt: 0x7a2a7a, pants: 0x2a1a2a, s: 1.6, skin: 0xc8a060 },
 };
 const GODS = [
-  { id: 'zeus', skin: 0xf0d0b0, sc: 2.6, name: 'Zeus', myth: 'Greek', kind: 'bolt', shirt: 0xf4f1e8, pants: 0xd8c070, weapon: 'lightning', wcol: 0xffe14a, col: 0xffe14a, desc: 'Lightning that chains between enemies.' },
-  { id: 'poseidon', skin: 0x7ad0d8, sc: 2.6, name: 'Poseidon', myth: 'Greek', kind: 'wave', shirt: 0x1a8a9a, pants: 0x14546a, weapon: 'trident', wcol: 0x44d0ff, col: 0x44c0ff, desc: 'Crashing waves that hurl enemies back.' },
-  { id: 'hades', skin: 0x9a9ab8, sc: 2.4, name: 'Hades', myth: 'Greek', kind: 'drain', shirt: 0x3a2a5a, pants: 0x1c1430, weapon: 'bident', wcol: 0xa040ff, col: 0xa040ff, desc: 'Drains life from enemies to heal himself.' },
-  { id: 'athena', skin: 0xf4d8c0, sc: 2.3, name: 'Athena', myth: 'Greek', kind: 'spear', shirt: 0xb0b8c8, pants: 0x6a728a, weapon: 'spear', wcol: 0xeef2ff, col: 0xdde6ff, desc: 'Piercing spears. Heals nearby soldiers.' },
-  { id: 'thor', skin: 0xe8c8a0, sc: 2.8, name: 'Thor', myth: 'Norse', kind: 'hammer', shirt: 0xb03030, pants: 0x4a3a2a, weapon: 'mjolnir', wcol: 0x9aa4b0, col: 0x9fd0ff, desc: 'Hammer slams that shake the ground.' },
-  { id: 'odin', skin: 0xd8b890, sc: 2.5, name: 'Odin', myth: 'Norse', kind: 'ravens', shirt: 0x44506a, pants: 0x222a3a, weapon: 'gungnir', wcol: 0xe8c050, col: 0x888899, desc: 'Ravens strike three enemies at once.' },
-  { id: 'loki', skin: 0x9ad8a0, sc: 2.2, name: 'Loki', myth: 'Norse', kind: 'dagger', shirt: 0x2a8a4a, pants: 0x143a22, weapon: 'daggers', wcol: 0x40e080, col: 0x40e080, desc: 'Lightning-fast melee strikes.' },
-  { id: 'freya', skin: 0xf8dcc8, sc: 2.2, name: 'Freya', myth: 'Norse', kind: 'heal', shirt: 0xe0a0c0, pants: 0x8a5a78, weapon: 'wand', wcol: 0xff9fcf, col: 0xff9fcf, desc: 'Light bolts that heal you and your army.' },
+  { id: 'zeus', skin: 0xf0d0b0, sc: 2.6, hair: 0xf4f4f4, name: 'Zeus', myth: 'Greek', kind: 'bolt', shirt: 0xf4f1e8, pants: 0xd8c070, weapon: 'lightning', wcol: 0xffe14a, col: 0xffe14a, desc: 'Lightning that chains between enemies.' },
+  { id: 'poseidon', skin: 0x7ad0d8, sc: 2.6, hair: 0x2a8a8a, name: 'Poseidon', myth: 'Greek', kind: 'wave', shirt: 0x1a8a9a, pants: 0x14546a, weapon: 'trident', wcol: 0x44d0ff, col: 0x44c0ff, desc: 'Crashing waves that hurl enemies back.' },
+  { id: 'hades', skin: 0x9a9ab8, sc: 2.4, hair: 0x14101c, name: 'Hades', myth: 'Greek', kind: 'drain', shirt: 0x3a2a5a, pants: 0x1c1430, weapon: 'bident', wcol: 0xa040ff, col: 0xa040ff, desc: 'Drains life from enemies to heal himself.' },
+  { id: 'athena', skin: 0xf4d8c0, sc: 2.3, hair: 0x4a2c1a, pretty: true, eyes: 0x4a8ac0, name: 'Athena', myth: 'Greek', kind: 'spear', shirt: 0xb0b8c8, pants: 0x6a728a, weapon: 'spear', wcol: 0xeef2ff, col: 0xdde6ff, desc: 'Piercing spears. Heals nearby soldiers.' },
+  { id: 'thor', skin: 0xe8c8a0, sc: 2.8, hair: 0xe0c060, name: 'Thor', myth: 'Norse', kind: 'hammer', shirt: 0xb03030, pants: 0x4a3a2a, weapon: 'mjolnir', wcol: 0x9aa4b0, col: 0x9fd0ff, desc: 'Hammer slams that shake the ground.' },
+  { id: 'odin', skin: 0xd8b890, sc: 2.5, hair: 0xb0b4bc, name: 'Odin', myth: 'Norse', kind: 'ravens', shirt: 0x44506a, pants: 0x222a3a, weapon: 'gungnir', wcol: 0xe8c050, col: 0x888899, desc: 'Ravens strike three enemies at once.' },
+  { id: 'loki', skin: 0x9ad8a0, sc: 2.2, hair: 0x1a2a1a, name: 'Loki', myth: 'Norse', kind: 'dagger', shirt: 0x2a8a4a, pants: 0x143a22, weapon: 'daggers', wcol: 0x40e080, col: 0x40e080, desc: 'Lightning-fast melee strikes.' },
+  { id: 'freya', skin: 0xf8dcc8, sc: 2.2, hair: 0xf0c860, pretty: true, eyes: 0x3aa88a, name: 'Freya', myth: 'Norse', kind: 'heal', shirt: 0xe0a0c0, pants: 0x8a5a78, weapon: 'wand', wcol: 0xff9fcf, col: 0xff9fcf, desc: 'Light bolts that heal you and your army.' },
 ];
 const GOD_RANGE = { bolt: 45, wave: 26, drain: 20, spear: 34, hammer: 4.5, ravens: 40, dagger: 3.2, heal: 30 };
 const GOD_CD = { bolt: 1.5, wave: 1.8, drain: 1.2, spear: 1.3, hammer: 1.3, ravens: 1.6, dagger: 0.35, heal: 1.1 };
@@ -510,7 +553,7 @@ function addSoldier(spec, x, z) {
   if (spec.t === 'god') {
     const g = GODS.find(q => q.id === spec.id);
     soldiers.push({ spec, x, z, y, hp: 1500, max: 1500, cd: 0, ranged: GOD_RANGE[g.kind] > 5, dying: 0, speed: 7, god: g,
-      c: makeChar({ shirt: g.shirt, pants: g.pants, weapon: g.weapon, wcol: g.wcol, s: g.sc, skin: g.skin, god: g.id, halo: g.col, glow: (g.col >> 1) & 0x7f7f7f }) });
+      c: makeChar({ shirt: g.shirt, pants: g.pants, weapon: g.weapon, wcol: g.wcol, s: g.sc, skin: g.skin, hair: g.hair, pretty: g.pretty, eyes: g.eyes, god: g.id, halo: g.col, glow: (g.col >> 1) & 0x7f7f7f }) });
   } else {
     const ranged = spec.t === 'archer';
     soldiers.push({ spec, x, z, y, hp: ranged ? 35 : 60, max: ranged ? 35 : 60, cd: 0, ranged, dying: 0, speed: 6,
@@ -612,7 +655,7 @@ const special = () => possessed && (possessed.ranged || possessed.god);
 // ---------- enemies and gods ----------
 function spawnEnemy(x, z, type, post) {
   const d = ENEMY[type];
-  enemies.push({ type, d, x, z, y: heightAt(x, z), hp: d.hp * LV.hpMul, max: d.hp * LV.hpMul, cd: 0, tz: (Math.random() - .5) * 10, dying: 0, guard: post || null, c: makeChar({ shirt: d.shirt, pants: d.pants, s: d.s, skin: d.skin }) });
+  enemies.push({ type, d, x, z, y: heightAt(x, z), hp: d.hp * LV.hpMul, max: d.hp * LV.hpMul, cd: 0, tz: (Math.random() - .5) * 10, dying: 0, guard: post || null, c: makeChar({ shirt: d.shirt, pants: d.pants, s: d.s, skin: d.skin, hair: 0x2a1a1a, angry: true }) });
 }
 const raiders = () => { let n = 0; for (const e of enemies) if (!e.guard) n++; return n; };
 function pickGuard() {

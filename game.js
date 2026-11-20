@@ -5,13 +5,13 @@ const $ = id => document.getElementById(id);
 const LEVELS = [
   { name: 'Green Valley', desc: 'Rolling hills and a river. A gentle start.', houses: 4, hp: 150, castle: 600, spawn: 20, spawnN: 1, cap: 22, pace: 0.7, hpMul: 0.8, dmgMul: 0.9, spd: 1, burst: 0, burstN: 0, gold: 500, seed: 10, amp: 20, river: 1, rshift: 0, sky: 0xbcd8ee, grass: 0x5b8f3c, sand: 0xb8a36a, rock: 0x80807a, water: 0x3a78c4, leaf: 0x2f6b32 },
   { name: 'Whispering Woods', desc: 'Tougher soldiers. Raids every 90 seconds.', houses: 5, hp: 260, castle: 1100, spawn: 15, spawnN: 1, cap: 32, pace: 1, hpMul: 1.2, dmgMul: 1.15, spd: 1.05, burst: 90, burstN: 3, gold: 600, seed: 47, amp: 24, river: 1, rshift: 12, sky: 0xa8c4b0, grass: 0x3f7a3a, sand: 0x9a9060, rock: 0x6a6a60, water: 0x2e6a8a, leaf: 0x1f5a2a },
-  { name: 'Scorched Dunes', desc: 'Houses make two soldiers at a time. Armored knights appear.', houses: 6, hp: 380, castle: 1800, spawn: 12, spawnN: 2, cap: 42, pace: 1.3, hpMul: 1.6, dmgMul: 1.5, spd: 1.1, burst: 70, burstN: 5, gold: 800, seed: 83, amp: 14, river: 0.3, rshift: -8, sky: 0xf0d9a8, grass: 0xd9b872, sand: 0xcfa95a, rock: 0xa07050, water: 0x3a9aa8, leaf: 0x8a9a3a },
+  { name: 'Scorched Dunes', desc: 'Island map. Archers on your shore can shell the castle across the strait. Knights appear.', houses: 6, hp: 380, castle: 1800, spawn: 12, spawnN: 2, cap: 42, pace: 1.3, hpMul: 1.6, dmgMul: 1.5, spd: 1.1, burst: 70, burstN: 5, gold: 800, seed: 83, amp: 14, river: 0, moat: -62, rshift: -8, sky: 0xf0d9a8, grass: 0xd9b872, sand: 0xcfa95a, rock: 0xa07050, water: 0x3a9aa8, leaf: 0x8a9a3a },
   { name: 'Frozen Reach', desc: 'Slingers shoot from range. Raids every 55 seconds.', houses: 8, hp: 520, castle: 2800, spawn: 10, spawnN: 2, cap: 52, pace: 1.6, hpMul: 2.1, dmgMul: 1.9, spd: 1.15, burst: 55, burstN: 7, gold: 1000, seed: 121, amp: 26, river: 1, rshift: 6, sky: 0xdce8f4, grass: 0xe8eef2, sand: 0xc8d4dc, rock: 0x8a96a4, water: 0x6a9ad0, leaf: 0x5a8a78 },
-  { name: 'Ashen Highlands', desc: 'Hard-hitting enemies and big raids every 42 seconds.', houses: 9, hp: 700, castle: 4000, spawn: 8, spawnN: 3, cap: 64, pace: 2, hpMul: 2.8, dmgMul: 2.4, spd: 1.2, burst: 42, burstN: 10, gold: 1500, seed: 157, amp: 30, river: 1, rshift: -10, sky: 0x6a4a46, grass: 0x4a4040, sand: 0x3a3030, rock: 0x2a2525, water: 0xc04a1a, leaf: 0x3a2a2a },
+  { name: 'Ashen Highlands', desc: 'Lava strait between the islands. Big raids every 42 seconds.', houses: 9, hp: 700, castle: 4000, spawn: 8, spawnN: 3, cap: 64, pace: 2, hpMul: 2.8, dmgMul: 2.4, spd: 1.2, burst: 42, burstN: 10, gold: 1500, seed: 157, amp: 30, river: 0, moat: -62, rshift: -10, sky: 0x6a4a46, grass: 0x4a4040, sand: 0x3a3030, rock: 0x2a2525, water: 0xc04a1a, leaf: 0x3a2a2a },
   { name: "Gods' End", desc: 'Ten houses making three soldiers each.', houses: 10, hp: 900, castle: 5500, spawn: 7, spawnN: 3, cap: 76, pace: 2.4, hpMul: 3.6, dmgMul: 3, spd: 1.25, burst: 34, burstN: 13, gold: 3000, seed: 199, amp: 24, river: 1, rshift: 0, sky: 0xd8c8f0, grass: 0x7a6aa0, sand: 0xb0a0c8, rock: 0x5a5070, water: 0xb080ff, leaf: 0x5a3a8a },
-  { name: 'Storm Coast', desc: 'Gray seas and a relentless horde.', houses: 10, hp: 1100, castle: 7500, spawn: 6, spawnN: 3, cap: 80, pace: 2.8, hpMul: 4.6, dmgMul: 3.7, spd: 1.3, burst: 28, burstN: 16, gold: 5000, seed: 233, amp: 28, river: 1, rshift: 8, sky: 0x6a7a8a, grass: 0x4a6a5a, sand: 0x8a8a78, rock: 0x55606a, water: 0x2a5a8a, leaf: 0x2a4a3a },
+  { name: 'Storm Coast', desc: 'Island map under a gray sky. A relentless horde.', houses: 10, hp: 1100, castle: 7500, spawn: 6, spawnN: 3, cap: 80, pace: 2.8, hpMul: 4.6, dmgMul: 3.7, spd: 1.3, burst: 28, burstN: 16, gold: 5000, seed: 233, amp: 28, river: 0, moat: -62, rshift: 8, sky: 0x6a7a8a, grass: 0x4a6a5a, sand: 0x8a8a78, rock: 0x55606a, water: 0x2a5a8a, leaf: 0x2a4a3a },
   { name: 'Bone Marsh', desc: 'Four soldiers per house. A raid every 24 seconds.', houses: 10, hp: 1400, castle: 10000, spawn: 5, spawnN: 4, cap: 90, pace: 3.3, hpMul: 6, dmgMul: 4.5, spd: 1.35, burst: 24, burstN: 20, gold: 8000, seed: 277, amp: 16, river: 0.8, rshift: -6, sky: 0x8a9a6a, grass: 0x5a6a3a, sand: 0x6a6a4a, rock: 0x4a4a3a, water: 0x4a6a3a, leaf: 0x3a4a2a },
-  { name: 'Crimson Wastes', desc: 'Enemies hit like siege hammers.', houses: 10, hp: 1800, castle: 14000, spawn: 4.5, spawnN: 4, cap: 100, pace: 3.8, hpMul: 8, dmgMul: 5.5, spd: 1.4, burst: 20, burstN: 25, gold: 12000, seed: 311, amp: 20, river: 0.6, rshift: 4, sky: 0xe0a080, grass: 0xa04a3a, sand: 0xc08060, rock: 0x602a2a, water: 0x802a4a, leaf: 0x703030 },
+  { name: 'Crimson Wastes', desc: 'Island map. Enemies hit like siege hammers.', houses: 10, hp: 1800, castle: 14000, spawn: 4.5, spawnN: 4, cap: 100, pace: 3.8, hpMul: 8, dmgMul: 5.5, spd: 1.4, burst: 20, burstN: 25, gold: 12000, seed: 311, amp: 20, river: 0, moat: -62, rshift: 4, sky: 0xe0a080, grass: 0xa04a3a, sand: 0xc08060, rock: 0x602a2a, water: 0x802a4a, leaf: 0x703030 },
   { name: 'Olympus Fall', desc: 'The final stand. Five soldiers per house, raids every 16 seconds.', houses: 10, hp: 2400, castle: 20000, spawn: 4, spawnN: 5, cap: 110, pace: 4.5, hpMul: 10, dmgMul: 7, spd: 1.45, burst: 16, burstN: 30, gold: 20000, seed: 353, amp: 26, river: 1, rshift: 0, sky: 0xf8eec0, grass: 0xc8b060, sand: 0xe8dca0, rock: 0x9a8a60, water: 0xffe08a, leaf: 0xb08a30 },
 ];
 
@@ -33,6 +33,7 @@ function heightAt(x, z) {
   const kf = Math.max(0, 1 - Math.hypot(x - KEEP.x, z - KEEP.z) / 35); h = h * (1 - kf) + 2 * kf;
   const sf = Math.max(0, 1 - Math.hypot(x - BASE.x, z) / 36); h = h * (1 - sf) + 2 * sf;
   const rd = x - riverX(z), rf = Math.exp(-(rd * rd) / 40) * LV.river; h = h * (1 - rf) + (-1.2) * rf;
+  if (LV.moat) { const mf = Math.max(0, Math.min(1, 1 - (Math.abs(x - LV.moat) - 8) / 6)); h = h * (1 - mf) - 1.4 * mf; }
   return h;
 }
 
@@ -155,9 +156,20 @@ function makeChar(o) {
   const pm = L(o.pants), am = L(skin);
   const legL = limb(0.75, 1.6, pm, -0.4, 1.6), legR = limb(0.75, 1.6, pm, 0.4, 1.6);
   const armL = limb(0.7, 1.6, am, -1.15, 3.3), armR = limb(0.7, 1.6, am, 1.15, 3.3);
-  const wc = o.wcol ?? 0xd9dde3;
+  const wc = o.wcol ?? 0xd9dde3; let bowG = null;
   if (o.weapon === 'sword') { bx(0.22, 0.22, 2.6, L(wc), 0, -1.5, 1.2, armR); bx(0.7, 0.18, 0.18, L(0x6b4a2b), 0, -1.5, 0.1, armR); }
-  else if (o.weapon === 'bow') bx(0.15, 2.4, 0.15, L(0x7a5230), 0, -1.5, 0.7, armL);
+  else if (o.weapon === 'bow') {
+    // curved limbs, grip, string and a nocked arrow, held out in front of the archer
+    bowG = new THREE.Group(); bowG.position.set(0, -1.5, 0); armL.add(bowG);
+    const wood = L(0x7a5230), pts = [[-1.3, -0.45], [-0.65, -0.13], [0, 0], [0.65, -0.13], [1.3, -0.45]];
+    for (let i = 0; i < 4; i++) {
+      const [y1, z1] = pts[i], [y2, z2] = pts[i + 1], dy = y2 - y1, dz = z2 - z1;
+      const q = bx(0.14, Math.hypot(dy, dz) + 0.06, 0.14, wood, 0, (y1 + y2) / 2, (z1 + z2) / 2, bowG); q.rotation.x = Math.atan2(dz, dy);
+    }
+    bx(0.2, 0.4, 0.22, L(0x3a2a1a), 0, 0, 0, bowG);
+    bx(0.03, 2.6, 0.03, L(0xeeeeee), 0, 0, -0.45, bowG);
+    bx(0.05, 0.05, 1.45, L(0x9a7a4a), 0, 0, 0.275, bowG); bx(0.1, 0.1, 0.2, L(0xcfd3d8), 0, 0, 1.05, bowG);
+  }
   else if (o.weapon === 'hammer') { bx(0.2, 0.2, 2.4, L(0x6b4a2b), 0, -1.5, 1.0, armR); bx(1.0, 1.0, 1.3, L(wc), 0, -1.5, 2.3, armR); }
   else if (o.weapon === 'trident') { bx(0.16, 0.16, 3.4, L(wc), 0, -1.5, 1.4, armR); for (const x of [-0.45, 0, 0.45]) bx(0.14, 0.14, 0.9, L(wc), x, -1.5, 3.4, armR); bx(1.1, 0.14, 0.14, L(wc), 0, -1.5, 3.0, armR); }
   else if (o.weapon === 'staff') { bx(0.16, 0.16, 3.4, L(0x6b4a2b), 0, -1.5, 1.4, armR); const gm = lam(wc, { emissive: wc }); bx(0.5, 0.5, 0.5, gm, 0, -1.5, 3.3, armR); }
@@ -166,7 +178,7 @@ function makeChar(o) {
   root.rotation.order = 'YXZ';
   root.scale.setScalar(0.45 * (o.s || 1));
   scene.add(root);
-  return { root, legL, legR, armL, armR, mats, phase: Math.random() * 6, atk: 0, flash: 0, glow: o.glow || 0 };
+  return { root, legL, legR, armL, armR, bowG, mats, phase: Math.random() * 6, atk: 0, flash: 0, glow: o.glow || 0 };
 }
 // Distinct looks per god: crowns, helmets, hair, capes, wings, shields.
 function godGear(id, root, armL, L) {
@@ -217,6 +229,7 @@ function animChar(c, dt, moving, sp, swim) {
     c.legL.rotation.x = w * 0.5; c.legR.rotation.x = -w * 0.5; c.armL.rotation.x = -2.3 + Math.sin(c.phase) * 0.8;
     if (c.atk <= 0) c.armR.rotation.x = -2.3 - Math.sin(c.phase) * 0.8;
   }
+  if (c.bowG) { c.armL.rotation.x = -1.4; c.bowG.rotation.x = 1.4; if (c.atk > 0) c.armR.rotation.x = -1.2; }
   c.flash = Math.max(0, c.flash - dt);
   for (const m of c.mats) m.emissive.setHex(c.flash > 0 ? 0xaa1111 : c.glow);
 }
@@ -284,6 +297,7 @@ function clearAll() {
   for (const f of effects || []) scene.remove(f.obj);
   for (const s of sinkers || []) scene.remove(s.mesh);
 }
+const ISLAND_HOUSES = [[-77, -10], [-77, 10], [-80, -24], [-80, 24], [-92, -16], [-92, 16], [-95, 0], [-88, -28], [-88, 28], [-96, -30]];
 const HOUSES = [[-62, 0], [-66, -12], [-66, 12], [-74, -21], [-74, 21], [-56, -14], [-56, 14], [-90, -14], [-90, 14], [-84, -27]];
 function startLevel(idx, carry) {
   levelIdx = idx; LV = LEVELS[idx]; clearAll(); buildTerrain();
@@ -291,7 +305,7 @@ function startLevel(idx, carry) {
   player = { x: px, z: 0, y: heightAt(px, 0), vy: 0, hp: 100, max: 100, hurt: 0, dead: false, respawn: 0, swing: null, combo: 0, comboT: 0, spinCd: 0, dash: 0 };
   enemies = []; soldiers = []; effects = []; sinkers = []; structs = []; eBuild = [];
   structs.push(makeStruct('keep', KEEP.x + 3, KEEP.z, 6, 1500, makeKeepMesh()));
-  for (const [x, z] of HOUSES.slice(0, LV.houses)) eBuild.push(makeStruct('house', x, z, 3.2, LV.hp, makeHouseMesh(), { t: 8 + Math.random() * 8 }));
+  for (const [x, z] of (LV.moat ? ISLAND_HOUSES : HOUSES).slice(0, LV.houses)) eBuild.push(makeStruct('house', x, z, 3.2, LV.hp, makeHouseMesh(), { t: 8 + Math.random() * 8 }));
   eBuild.push(makeStruct('castle', BASE.x - 4, 0, 8, LV.castle, makeCastleMesh(), { t: 45 }));
   for (const b of eBuild) b.mesh.rotation.y = Math.PI / 2;
   gold = carry ? carry.gold : LV.gold; swordLvl = carry ? carry.sword : 0; gameT = 0; army = 'defend'; state = 'play'; burstT = LV.burst || 0;
@@ -570,6 +584,7 @@ function update(dt) {
       if (s.dying) continue;
       s.cd -= dt; const g = s.god, arch = s.ranged && !g, range = g ? GOD_RANGE[g.kind] : s.ranged ? 34 : 2.3;
       let t = nearest(s, enemies, (g ? range : s.ranged ? 34 : 12) + 14), isB = false;
+      if (!t && s.ranged) { const b = nearest(s, eBuild.filter(alive), range + 10); if (b && b.d - b.e.r <= range) { t = b; isB = true; } }
       if (!t && army === 'attack') { const b = nearest(s, eBuild.filter(alive), 1e9); if (b) { t = b; isB = true; } }
       let moving = false;
       if (t) {
@@ -582,7 +597,7 @@ function update(dt) {
         else if (s.cd <= 0) {
           if (g) godAttack(s, t.e, isB);
           else {
-            s.cd = s.ranged ? 1.1 : 0.7; s.c.atk = 0.3; const dm = 10 + swordLvl * 2;
+            s.cd = s.ranged ? 1.1 : 0.7; s.c.atk = 0.3; const dm = (10 + swordLvl * 2) * (isB ? 3 : 1);
             hurtT(t.e, dm);
             if (s.ranged) tracer(new THREE.Vector3(s.x, s.y + 2, s.z), new THREE.Vector3(t.e.x, (t.e.y || 0) + 2, t.e.z));
           }

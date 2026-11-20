@@ -371,7 +371,7 @@ function swingDamage(type) {
 // ---------- shop ----------
 const ITEMS = [
   { sec: 'Army', id: 'soldier', name: 'Soldier', desc: 'Melee fighter. Obeys your army orders.', cost: 60 },
-  { id: 'archer', name: 'Archer', desc: 'Shoots from range.', cost: 90 },
+  { id: 'archer', name: 'Archer', desc: 'Long range (34). Cannot cross water.', cost: 90 },
   { sec: 'Buildings', id: 'bank', name: 'Bank', desc: '+40 gold per second. Enemies will target it.', cost: 300 },
   { id: 'home', name: 'House', desc: 'Makes a free soldier every 20 s (up to 4 per house). Enemies will target it.', cost: 250 },
   { id: 'wall', name: 'Wall', desc: 'Blocks enemies until they break it.', cost: 40 },
@@ -568,14 +568,17 @@ function update(dt) {
     // soldiers and gods
     for (const s of soldiers) {
       if (s.dying) continue;
-      s.cd -= dt; const g = s.god, range = g ? GOD_RANGE[g.kind] : s.ranged ? 20 : 2.3;
-      let t = nearest(s, enemies, (g ? range : s.ranged ? 20 : 12) + 14), isB = false;
+      s.cd -= dt; const g = s.god, arch = s.ranged && !g, range = g ? GOD_RANGE[g.kind] : s.ranged ? 34 : 2.3;
+      let t = nearest(s, enemies, (g ? range : s.ranged ? 34 : 12) + 14), isB = false;
       if (!t && army === 'attack') { const b = nearest(s, eBuild.filter(alive), 1e9); if (b) { t = b; isB = true; } }
       let moving = false;
       if (t) {
         const dx = t.e.x - s.x, dz = t.e.z - s.z; face(s, dx, dz);
         const eff = t.d - (isB ? t.e.r : 0);
-        if (eff > range) { const ss = s.speed * (inWater(s) ? 0.8 : 1); s.x += dx / t.d * ss * dt; s.z += dz / t.d * ss * dt; moving = true; collide(s, g ? 1.2 : 0.6, true); }
+        if (eff > range) {
+          const ss = s.speed * (inWater(s) ? 0.8 : 1); let nx = s.x + dx / t.d * ss * dt, nz = s.z + dz / t.d * ss * dt; const ox = s.x, oz = s.z;
+          if (arch && inWater({ x: nx, z: nz })) { if (!inWater({ x: nx, z: s.z })) nz = s.z; else if (!inWater({ x: s.x, z: nz })) nx = s.x; else { nx = s.x; nz = s.z; } }
+          s.x = nx; s.z = nz; moving = nx !== ox || nz !== oz; collide(s, g ? 1.2 : 0.6, true); }
         else if (s.cd <= 0) {
           if (g) godAttack(s, t.e, isB);
           else {
@@ -603,6 +606,8 @@ function update(dt) {
     }
     for (const u of soldiers) if (!u.dying) collide(u, rad(u), true);
     for (const u of enemies) if (!u.dying) collide(u, rad(u), false);
+    // archers can't cross water: undo anything that pushed them in
+    for (const u of soldiers) if (u.ranged && !u.god && !u.dying) { if (!inWater(u)) { u.lx = u.x; u.lz = u.z; } else if (u.lx !== undefined) { u.x = u.lx; u.z = u.lz; } }
     // buildings: flash, destruction
     for (const list of [structs, eBuild]) for (const b of [...list]) {
       b.flash = Math.max(0, b.flash - dt); for (const m of b.mats) m.emissive.setHex(b.flash > 0 ? 0x661111 : 0);

@@ -8,6 +8,7 @@ Serve the folder (`python3 -m http.server 8000`) and open http://localhost:8000.
 
 ## Controls
 
+- Touch: left stick moves, drag the view to look, Attack button (hold to lunge), Spin and Jump buttons. Best in landscape.
 - Arrow keys (or WASD): move. Space: jump.
 - Mouse: look (click the view to capture it, or hold right mouse and drag). Q/E also turn.
 - Click: sword combo (slash, backhand, overhead slam). Hold click then release: lunge. F: spin attack.

@@ -258,7 +258,7 @@ const GOD_DMG = { bolt: 160, wave: 90, drain: 110, spear: 150, hammer: 130, rave
 const GOD_COST = 50000;
 
 let player, enemies, soldiers, structs, eBuild, effects, sinkers, gold, swordLvl, state, gameT, army, shopOpen = false;
-let burstT = 0;
+let burstT = 0; const tj = { x: 0, y: 0 };
 let yaw = -Math.PI / 2, pitch = 0, bobT = 0, msg = '', sayT; const keys = {};
 let charging = false, chargeT = 0, queued = false, lookDrag = false;
 const FX = { arcT: 0, dur: 0.3 };
@@ -487,7 +487,8 @@ function update(dt) {
       player.respawn -= dt; say('You fell. Respawning at the keep in ' + Math.max(1, Math.ceil(player.respawn)) + '...');
       if (player.respawn <= 0) { Object.assign(player, { dead: false, hp: player.max, x: KEEP.x - 14, z: 0, vy: 0, swing: null }); player.y = heightAt(player.x, 0); camera.rotation.z = 0; say(''); }
     } else {
-      const ix = (keys.arrowright || keys.d ? 1 : 0) - (keys.arrowleft || keys.a ? 1 : 0), iz = (keys.arrowup || keys.w ? 1 : 0) - (keys.arrowdown || keys.s ? 1 : 0);
+      let ix = (keys.arrowright || keys.d ? 1 : 0) - (keys.arrowleft || keys.a ? 1 : 0), iz = (keys.arrowup || keys.w ? 1 : 0) - (keys.arrowdown || keys.s ? 1 : 0);
+      if (tj.x || tj.y) { ix = tj.x; iz = tj.y; }
       let moving = false;
       if (ix || iz) {
         const dx0 = fx * iz + rx * ix, dz0 = fz * iz + rz * ix, l = Math.hypot(dx0, dz0), sp = 9 * (inWater(player) ? 0.55 : 1) * (charging ? 0.6 : 1) * dt;
@@ -677,6 +678,14 @@ function render() {
 }
 
 // ---------- input ----------
+function pressAttack() { if (shopOpen || state !== 'play') return; charging = true; chargeT = 0; }
+function releaseAttack() {
+  if (!charging) return; charging = false;
+  if (player.dead || shopOpen) return;
+  if (chargeT >= 0.6) { if (player.swing) queued = false; else startSwing('lunge'); } else comboSwing();
+  chargeT = 0;
+}
+function doSpin() { if (player.spinCd <= 0 && !player.swing && !player.dead && state === 'play' && !shopOpen) { startSwing('spin'); player.spinCd = 1.5; } }
 const cv = renderer.domElement;
 const locked = () => document.pointerLockElement === cv;
 cv.addEventListener('contextmenu', e => e.preventDefault());
@@ -684,14 +693,11 @@ cv.addEventListener('mousedown', e => {
   if (shopOpen || state !== 'play') return;
   if (e.button === 2) { lookDrag = true; return; }
   if (!locked()) { try { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (err) {} }
-  charging = true; chargeT = 0;
+  pressAttack();
 });
 window.addEventListener('mouseup', e => {
   if (e.button === 2) { lookDrag = false; return; }
-  if (!charging) return; charging = false;
-  if (player.dead || shopOpen) return;
-  if (chargeT >= 0.6) { if (player.swing) queued = false; else startSwing('lunge'); } else comboSwing();
-  chargeT = 0;
+  releaseAttack();
 });
 window.addEventListener('mousemove', e => {
   if (!locked() && !lookDrag) return;
@@ -704,7 +710,7 @@ window.addEventListener('keydown', e => {
   if (k === 'escape' && shopOpen) { setShop(false); setLevels(false); }
   if (shopOpen) return;
   if (k === 't' && state === 'play') setArmy(army === 'defend' ? 'attack' : 'defend');
-  if (k === 'f' && player.spinCd <= 0 && !player.swing && !player.dead && state === 'play') { startSwing('spin'); player.spinCd = 1.5; }
+  if (k === 'f') doSpin();
   if (k === 'r' && state !== 'play') overAction();
 });
 window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
@@ -714,6 +720,38 @@ $('shopClose').onclick = () => setShop(false);
 $('again').onclick = () => overAction();
 $('btnLevels').onclick = () => setLevels($('levelMenu').hidden);
 $('levelClose').onclick = () => setLevels(false);
+
+// ---------- touch controls ----------
+{
+  const ui = $('touch'), joy = $('joy'), knob = $('knob'); let joyId = null, lookId = null, lx = 0, ly = 0;
+  const show = () => { ui.hidden = false; };
+  if (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches) show();
+  window.addEventListener('touchstart', show, { once: true });
+  const NP = { passive: false };
+  const joyMove = t => {
+    const r = joy.getBoundingClientRect(), R = r.width / 2; let dx = t.clientX - (r.left + R), dy = t.clientY - (r.top + R); const l = Math.hypot(dx, dy);
+    if (l > R) { dx *= R / l; dy *= R / l; }
+    knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)'; tj.x = dx / R; tj.y = -dy / R; if (Math.hypot(tj.x, tj.y) < 0.2) tj.x = tj.y = 0;
+  };
+  joy.addEventListener('touchstart', e => { e.preventDefault(); const t = e.changedTouches[0]; joyId = t.identifier; joyMove(t); }, NP);
+  joy.addEventListener('touchmove', e => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === joyId) joyMove(t); }, NP);
+  const joyEnd = e => { for (const t of e.changedTouches) if (t.identifier === joyId) { joyId = null; tj.x = tj.y = 0; knob.style.transform = ''; } };
+  joy.addEventListener('touchend', joyEnd); joy.addEventListener('touchcancel', joyEnd);
+  cv.addEventListener('touchstart', e => { e.preventDefault(); if (lookId !== null || shopOpen) return; const t = e.changedTouches[0]; lookId = t.identifier; lx = t.clientX; ly = t.clientY; }, NP);
+  cv.addEventListener('touchmove', e => {
+    e.preventDefault();
+    for (const t of e.changedTouches) if (t.identifier === lookId) { yaw -= (t.clientX - lx) * 0.006; pitch = Math.max(-1.4, Math.min(1.4, pitch - (t.clientY - ly) * 0.006)); lx = t.clientX; ly = t.clientY; }
+  }, NP);
+  const lookEnd = e => { for (const t of e.changedTouches) if (t.identifier === lookId) lookId = null; };
+  cv.addEventListener('touchend', lookEnd); cv.addEventListener('touchcancel', lookEnd);
+  const hold = (id, down, up) => {
+    const el = $(id); el.addEventListener('touchstart', e => { e.preventDefault(); down(); }, NP);
+    const end = e => { e.preventDefault(); up && up(); }; el.addEventListener('touchend', end, NP); el.addEventListener('touchcancel', end, NP);
+  };
+  hold('tAtk', pressAttack, releaseAttack);
+  hold('tSpin', doSpin);
+  hold('tJump', () => { keys[' '] = true; }, () => { keys[' '] = false; });
+}
 
 function resize() { const w = wrap.clientWidth, h = wrap.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 new ResizeObserver(resize).observe(wrap); resize();

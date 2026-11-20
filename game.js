@@ -3,12 +3,16 @@ const KEEP = { x: 70, z: 0 }, BASE = { x: -78, z: 0 }, WATER = 0.4, HALF = 100;
 const wrap = document.getElementById('wrap');
 const $ = id => document.getElementById(id);
 const LEVELS = [
-  { name: 'Green Valley', desc: 'Rolling hills and a river. A gentle start.', houses: 4, hp: 150, castle: 600, spawn: 20, spawnN: 1, cap: 22, pace: .6, hpMul: .7, dmgMul: .8, spd: .95, burst: 0, burstN: 0, gold: 500, seed: 10, amp: 20, river: 1, rshift: 0, sky: 0xbcd8ee, grass: 0x5b8f3c, sand: 0xb8a36a, rock: 0x80807a, water: 0x3a78c4, leaf: 0x2f6b32 },
-  { name: 'Whispering Woods', desc: 'Steeper ground and tougher soldiers.', houses: 5, hp: 220, castle: 1000, spawn: 16, spawnN: 1, cap: 30, pace: .9, hpMul: 1, dmgMul: 1, spd: 1, burst: 0, burstN: 0, gold: 600, seed: 47, amp: 24, river: 1, rshift: 12, sky: 0xa8c4b0, grass: 0x3f7a3a, sand: 0x9a9060, rock: 0x6a6a60, water: 0x2e6a8a, leaf: 0x1f5a2a },
-  { name: 'Scorched Dunes', desc: 'Open desert. Raids arrive every 75 seconds.', houses: 6, hp: 300, castle: 1600, spawn: 13, spawnN: 1, cap: 38, pace: 1.1, hpMul: 1.3, dmgMul: 1.25, spd: 1.05, burst: 75, burstN: 4, gold: 800, seed: 83, amp: 14, river: .3, rshift: -8, sky: 0xf0d9a8, grass: 0xd9b872, sand: 0xcfa95a, rock: 0xa07050, water: 0x3a9aa8, leaf: 0x8a9a3a },
-  { name: 'Frozen Reach', desc: 'Houses make two soldiers at a time. Raids every minute.', houses: 8, hp: 400, castle: 2400, spawn: 12, spawnN: 2, cap: 46, pace: 1.3, hpMul: 1.7, dmgMul: 1.5, spd: 1.1, burst: 60, burstN: 6, gold: 1000, seed: 121, amp: 26, river: 1, rshift: 6, sky: 0xdce8f4, grass: 0xe8eef2, sand: 0xc8d4dc, rock: 0x8a96a4, water: 0x6a9ad0, leaf: 0x5a8a78 },
-  { name: 'Ashen Highlands', desc: 'Hard-hitting enemies and big raids every 45 seconds.', houses: 9, hp: 520, castle: 3400, spawn: 10, spawnN: 2, cap: 56, pace: 1.6, hpMul: 2.2, dmgMul: 1.8, spd: 1.15, burst: 45, burstN: 8, gold: 1500, seed: 157, amp: 30, river: 1, rshift: -10, sky: 0x6a4a46, grass: 0x4a4040, sand: 0x3a3030, rock: 0x2a2525, water: 0xc04a1a, leaf: 0x3a2a2a },
-  { name: "Gods' End", desc: 'Ten houses making three soldiers each. Massive raids every 35 seconds.', houses: 10, hp: 700, castle: 5000, spawn: 8, spawnN: 3, cap: 70, pace: 2, hpMul: 3, dmgMul: 2.2, spd: 1.2, burst: 35, burstN: 12, gold: 3000, seed: 199, amp: 24, river: 1, rshift: 0, sky: 0xd8c8f0, grass: 0x7a6aa0, sand: 0xb0a0c8, rock: 0x5a5070, water: 0xb080ff, leaf: 0x5a3a8a },
+  { name: 'Green Valley', desc: 'Rolling hills and a river. A gentle start.', houses: 4, hp: 150, castle: 600, spawn: 20, spawnN: 1, cap: 22, pace: 0.7, hpMul: 0.8, dmgMul: 0.9, spd: 1, burst: 0, burstN: 0, gold: 500, seed: 10, amp: 20, river: 1, rshift: 0, sky: 0xbcd8ee, grass: 0x5b8f3c, sand: 0xb8a36a, rock: 0x80807a, water: 0x3a78c4, leaf: 0x2f6b32 },
+  { name: 'Whispering Woods', desc: 'Tougher soldiers. Raids every 90 seconds.', houses: 5, hp: 260, castle: 1100, spawn: 15, spawnN: 1, cap: 32, pace: 1, hpMul: 1.2, dmgMul: 1.15, spd: 1.05, burst: 90, burstN: 3, gold: 600, seed: 47, amp: 24, river: 1, rshift: 12, sky: 0xa8c4b0, grass: 0x3f7a3a, sand: 0x9a9060, rock: 0x6a6a60, water: 0x2e6a8a, leaf: 0x1f5a2a },
+  { name: 'Scorched Dunes', desc: 'Houses make two soldiers at a time. Armored knights appear.', houses: 6, hp: 380, castle: 1800, spawn: 12, spawnN: 2, cap: 42, pace: 1.3, hpMul: 1.6, dmgMul: 1.5, spd: 1.1, burst: 70, burstN: 5, gold: 800, seed: 83, amp: 14, river: 0.3, rshift: -8, sky: 0xf0d9a8, grass: 0xd9b872, sand: 0xcfa95a, rock: 0xa07050, water: 0x3a9aa8, leaf: 0x8a9a3a },
+  { name: 'Frozen Reach', desc: 'Slingers shoot from range. Raids every 55 seconds.', houses: 8, hp: 520, castle: 2800, spawn: 10, spawnN: 2, cap: 52, pace: 1.6, hpMul: 2.1, dmgMul: 1.9, spd: 1.15, burst: 55, burstN: 7, gold: 1000, seed: 121, amp: 26, river: 1, rshift: 6, sky: 0xdce8f4, grass: 0xe8eef2, sand: 0xc8d4dc, rock: 0x8a96a4, water: 0x6a9ad0, leaf: 0x5a8a78 },
+  { name: 'Ashen Highlands', desc: 'Hard-hitting enemies and big raids every 42 seconds.', houses: 9, hp: 700, castle: 4000, spawn: 8, spawnN: 3, cap: 64, pace: 2, hpMul: 2.8, dmgMul: 2.4, spd: 1.2, burst: 42, burstN: 10, gold: 1500, seed: 157, amp: 30, river: 1, rshift: -10, sky: 0x6a4a46, grass: 0x4a4040, sand: 0x3a3030, rock: 0x2a2525, water: 0xc04a1a, leaf: 0x3a2a2a },
+  { name: "Gods' End", desc: 'Ten houses making three soldiers each.', houses: 10, hp: 900, castle: 5500, spawn: 7, spawnN: 3, cap: 76, pace: 2.4, hpMul: 3.6, dmgMul: 3, spd: 1.25, burst: 34, burstN: 13, gold: 3000, seed: 199, amp: 24, river: 1, rshift: 0, sky: 0xd8c8f0, grass: 0x7a6aa0, sand: 0xb0a0c8, rock: 0x5a5070, water: 0xb080ff, leaf: 0x5a3a8a },
+  { name: 'Storm Coast', desc: 'Gray seas and a relentless horde.', houses: 10, hp: 1100, castle: 7500, spawn: 6, spawnN: 3, cap: 80, pace: 2.8, hpMul: 4.6, dmgMul: 3.7, spd: 1.3, burst: 28, burstN: 16, gold: 5000, seed: 233, amp: 28, river: 1, rshift: 8, sky: 0x6a7a8a, grass: 0x4a6a5a, sand: 0x8a8a78, rock: 0x55606a, water: 0x2a5a8a, leaf: 0x2a4a3a },
+  { name: 'Bone Marsh', desc: 'Four soldiers per house. A raid every 24 seconds.', houses: 10, hp: 1400, castle: 10000, spawn: 5, spawnN: 4, cap: 90, pace: 3.3, hpMul: 6, dmgMul: 4.5, spd: 1.35, burst: 24, burstN: 20, gold: 8000, seed: 277, amp: 16, river: 0.8, rshift: -6, sky: 0x8a9a6a, grass: 0x5a6a3a, sand: 0x6a6a4a, rock: 0x4a4a3a, water: 0x4a6a3a, leaf: 0x3a4a2a },
+  { name: 'Crimson Wastes', desc: 'Enemies hit like siege hammers.', houses: 10, hp: 1800, castle: 14000, spawn: 4.5, spawnN: 4, cap: 100, pace: 3.8, hpMul: 8, dmgMul: 5.5, spd: 1.4, burst: 20, burstN: 25, gold: 12000, seed: 311, amp: 20, river: 0.6, rshift: 4, sky: 0xe0a080, grass: 0xa04a3a, sand: 0xc08060, rock: 0x602a2a, water: 0x802a4a, leaf: 0x703030 },
+  { name: 'Olympus Fall', desc: 'The final stand. Five soldiers per house, raids every 16 seconds.', houses: 10, hp: 2400, castle: 20000, spawn: 4, spawnN: 5, cap: 110, pace: 4.5, hpMul: 10, dmgMul: 7, spd: 1.45, burst: 16, burstN: 30, gold: 20000, seed: 353, amp: 26, river: 1, rshift: 0, sky: 0xf8eec0, grass: 0xc8b060, sand: 0xe8dca0, rock: 0x9a8a60, water: 0xffe08a, leaf: 0xb08a30 },
 ];
 
 let LV = LEVELS[0], levelIdx = 0, snap = null;
@@ -159,6 +163,7 @@ function makeChar(o) {
   else if (o.weapon === 'staff') { bx(0.16, 0.16, 3.4, L(0x6b4a2b), 0, -1.5, 1.4, armR); const gm = lam(wc, { emissive: wc }); bx(0.5, 0.5, 0.5, gm, 0, -1.5, 3.3, armR); }
   if (o.god) godGear(o.god, root, armL, L);
   if (o.halo) { const h = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.09, 6, 24), new THREE.MeshBasicMaterial({ color: o.halo })); h.rotation.x = Math.PI / 2; h.position.y = 5.2; root.add(h); }
+  root.rotation.order = 'YXZ';
   root.scale.setScalar(0.45 * (o.s || 1));
   scene.add(root);
   return { root, legL, legR, armL, armR, mats, phase: Math.random() * 6, atk: 0, flash: 0, glow: o.glow || 0 };
@@ -200,13 +205,18 @@ function godGear(id, root, armL, L) {
     b(0.4, 0.4, 0.12, glow(0xff9fcf), 0, 3.4, 0.45);
   }
 }
-function animChar(c, dt, moving, sp) {
+function animChar(c, dt, moving, sp, swim) {
   c.phase += dt * 9 * sp; const s = Math.sin(c.phase);
   const k = moving ? 1 : 0, lerp = (a, b) => a + (b - a) * Math.min(1, dt * 12);
   c.legL.rotation.x = lerp(c.legL.rotation.x, s * 0.9 * k); c.legR.rotation.x = lerp(c.legR.rotation.x, -s * 0.9 * k);
   c.armL.rotation.x = lerp(c.armL.rotation.x, -s * 0.7 * k);
   c.atk = Math.max(0, c.atk - dt);
   c.armR.rotation.x = c.atk > 0 ? -Math.sin(Math.PI * (1 - c.atk / 0.3)) * 2.3 : lerp(c.armR.rotation.x, s * 0.7 * k);
+  if (swim) {
+    const w = Math.sin(c.phase * 1.6);
+    c.legL.rotation.x = w * 0.5; c.legR.rotation.x = -w * 0.5; c.armL.rotation.x = -2.3 + Math.sin(c.phase) * 0.8;
+    if (c.atk <= 0) c.armR.rotation.x = -2.3 - Math.sin(c.phase) * 0.8;
+  }
   c.flash = Math.max(0, c.flash - dt);
   for (const m of c.mats) m.emissive.setHex(c.flash > 0 ? 0xaa1111 : c.glow);
 }
@@ -240,6 +250,8 @@ const ENEMY = {
   grunt:   { hp: 40,  speed: 4.5, dmg: 8,  reward: 15, shirt: 0xc94a4a, pants: 0x333333, s: 1 },
   runner:  { hp: 24,  speed: 8,   dmg: 5,  reward: 12, shirt: 0xe0a040, pants: 0x553311, s: 0.9 },
   swimmer: { hp: 50,  speed: 4.8, dmg: 8,  reward: 25, shirt: 0x2aa8a8, pants: 0x226666, s: 1, swim: true },
+  knight:  { hp: 120, speed: 3.8, dmg: 14, reward: 40, shirt: 0x9aa4b0, pants: 0x4a525c, s: 1.15, armor: 0.5 },
+  slinger: { hp: 35,  speed: 4.2, dmg: 9,  reward: 30, shirt: 0x5a8a3a, pants: 0x3a3a2a, s: 0.95, range: 16 },
   brute:   { hp: 180, speed: 3,   dmg: 20, reward: 60, shirt: 0x7a2a7a, pants: 0x2a1a2a, s: 1.6, skin: 0xc8a060 },
 };
 const GODS = [
@@ -296,6 +308,8 @@ const dist2 = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const nearest = (from, list, max) => { let b = null, bd = max; for (const e of list) { if (e.dying) continue; const d = Math.hypot(e.x - from.x, e.z - from.z); if (d < bd) { bd = d; b = e; } } return b && { e: b, d: bd }; };
 const inWater = e => heightAt(e.x, e.z) < WATER - 0.1;
 const alive = b => b.hp > 0;
+const groundY = (x, z) => Math.max(heightAt(x, z), WATER - 0.9);
+const swimming = e => heightAt(e.x, e.z) < WATER - 0.9;
 function collide(e, r, withEnemy) {
   let hit = null;
   for (const list of withEnemy ? [structs, eBuild] : [structs]) for (const w of list) {
@@ -305,7 +319,7 @@ function collide(e, r, withEnemy) {
   }
   return hit;
 }
-function hurtT(t, dmg) { if (t.c) { t.hp -= dmg; t.c.flash = 0.12; } else { t.hp -= dmg; t.flash = 0.12; } }
+function hurtT(t, dmg) { if (t.d && t.d.armor) dmg *= 1 - t.d.armor; if (t.c) { t.hp -= dmg; t.c.flash = 0.12; } else { t.hp -= dmg; t.flash = 0.12; } }
 
 // ---------- effects ----------
 function tracer(a, b, col) {
@@ -440,8 +454,10 @@ function spawnEnemy(x, z, type) {
   enemies.push({ type, d, x, z, y: heightAt(x, z), hp: d.hp * LV.hpMul, max: d.hp * LV.hpMul, cd: 0, tz: (Math.random() - .5) * 10, dying: 0, c: makeChar({ shirt: d.shirt, pants: d.pants, s: d.s, skin: d.skin }) });
 }
 function pickType() {
-  const r = Math.random(), t = gameT * LV.pace;
-  if (t > 240 && r < .12) return 'brute'; if (t > 120 && r < .3) return 'swimmer'; if (t > 60 && r < .5) return 'runner'; return 'grunt';
+  const t = gameT * LV.pace, pool = ['grunt', 'grunt', 'grunt'];
+  if (t > 60) pool.push('runner', 'runner'); if (t > 100) pool.push('slinger', 'slinger'); if (t > 120) pool.push('swimmer');
+  if (t > 160) pool.push('knight', 'knight'); if (t > 240) pool.push('brute');
+  return pool[Math.random() * pool.length | 0];
 }
 function godAttack(s, t, isB) {
   const g = s.god, k = g.kind, tx = t.x, tz = t.z, ty = (t.y || heightAt(tx, tz)) + 2;
@@ -496,7 +512,7 @@ function update(dt) {
       }
       if (player.dash > 0) { player.dash -= dt; player.x += fx * 26 * dt; player.z += fz * 26 * dt; }
       collide(player, 0.7, true);
-      const gy = heightAt(player.x, player.z);
+      const gy = groundY(player.x, player.z);
       if (keys[' '] && player.y <= gy + 0.05) player.vy = 9;
       player.vy -= 26 * dt; player.y += player.vy * dt; if (player.y < gy) { player.y = gy; player.vy = 0; }
       if (keys.q) yaw += 2 * dt; if (keys.e) yaw -= 2 * dt;
@@ -531,7 +547,7 @@ function update(dt) {
     for (const e of enemies) {
       if (e.dying) continue;
       e.cd -= dt; const d = e.d, r = 0.6 * d.s;
-      const t = nearest(e, [...(player.dead ? [] : [player]), ...soldiers.filter(s => !s.dying)], 14);
+      const t = nearest(e, [...(player.dead ? [] : [player]), ...soldiers.filter(s => !s.dying)], d.range ? d.range + 4 : 14);
       let tx, tz, moving = true, sp = d.speed * LV.spd * (inWater(e) && !d.swim ? 0.55 : 1);
       if (t) { tx = t.e.x; tz = t.e.z; }
       else {
@@ -539,15 +555,15 @@ function update(dt) {
         if (bank) { tx = bank.e.x; tz = bank.e.z; } else { tx = KEEP.x - 2; tz = KEEP.z + e.tz; }
       }
       const dx = tx - e.x, dz = tz - e.z, dist = Math.hypot(dx, dz) || 1;
-      if (t && t.d < 1.9 * d.s + 0.6) {
+      if (t && t.d < (d.range || 1.9 * d.s + 0.6)) {
         moving = false; face(e, dx, dz);
-        if (e.cd <= 0) { e.cd = 0.9; e.c.atk = 0.3; t.e.hp -= d.dmg * LV.dmgMul; t.e.c ? (t.e.c.flash = 0.12) : 0; if (t.e === player) player.hurt = 0.25; }
+        if (e.cd <= 0) { e.cd = d.range ? 1.4 : 0.9; e.c.atk = 0.3; if (d.range) tracer(new THREE.Vector3(e.x, e.y + 2, e.z), new THREE.Vector3(t.e.x, (t.e.y || 0) + 2, t.e.z), 0xc08040); t.e.hp -= d.dmg * LV.dmgMul; t.e.c ? (t.e.c.flash = 0.12) : 0; if (t.e === player) player.hurt = 0.25; }
       } else {
         e.x += dx / dist * sp * dt; e.z += dz / dist * sp * dt; face(e, dx, dz);
         const w = collide(e, r, false);
         if (w) { moving = false; w.hp -= d.dmg * LV.dmgMul * 1.2 * (e.type === 'brute' ? 2 : 1) * dt; w.flash = 0.1; if (e.cd <= 0) { e.cd = 0.5; e.c.atk = 0.3; } }
       }
-      e.y = heightAt(e.x, e.z); animChar(e.c, dt, moving, sp / 4.5);
+      e.y = groundY(e.x, e.z); animChar(e.c, dt, moving, sp / 4.5, swimming(e));
     }
     // soldiers and gods
     for (const s of soldiers) {
@@ -559,7 +575,7 @@ function update(dt) {
       if (t) {
         const dx = t.e.x - s.x, dz = t.e.z - s.z; face(s, dx, dz);
         const eff = t.d - (isB ? t.e.r : 0);
-        if (eff > range) { s.x += dx / t.d * s.speed * dt; s.z += dz / t.d * s.speed * dt; moving = true; collide(s, g ? 1.2 : 0.6, true); }
+        if (eff > range) { const ss = s.speed * (inWater(s) ? 0.8 : 1); s.x += dx / t.d * ss * dt; s.z += dz / t.d * ss * dt; moving = true; collide(s, g ? 1.2 : 0.6, true); }
         else if (s.cd <= 0) {
           if (g) godAttack(s, t.e, isB);
           else {
@@ -569,7 +585,7 @@ function update(dt) {
           }
         }
       }
-      s.y = heightAt(s.x, s.z); animChar(s.c, dt, moving, 1.2);
+      s.y = groundY(s.x, s.z); animChar(s.c, dt, moving, 1.2, swimming(s));
     }
     // keep units from stacking: push overlapping units apart (gods are heavy)
     const crowd = [...enemies, ...soldiers].filter(u => !u.dying);
@@ -615,7 +631,7 @@ function update(dt) {
   effects = effects.filter(f => { if (f.t <= 0) scene.remove(f.obj); return f.t > 0; });
   for (const s of sinkers) { s.t -= dt; s.mesh.position.y -= dt * 3; if (s.t <= 0) scene.remove(s.mesh); }
   sinkers = sinkers.filter(s => s.t > 0);
-  for (const e of [...enemies, ...soldiers]) { e.y = heightAt(e.x, e.z); e.c.root.position.set(e.x, e.y, e.z); if (!e.dying) e.c.root.rotation.x = 0; }
+  for (const e of [...enemies, ...soldiers]) { e.y = groundY(e.x, e.z); e.c.root.position.set(e.x, e.y, e.z); if (!e.dying) e.c.root.rotation.x = swimming(e) ? 0.6 : 0; }
   updateViewmodel(dt);
 }
 function endGame(won, why) {
@@ -755,6 +771,17 @@ $('levelClose').onclick = () => setLevels(false);
 
 function resize() { const w = wrap.clientWidth, h = wrap.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 new ResizeObserver(resize).observe(wrap); resize();
+
+// keep the screen awake while playing (ignored where unsupported)
+let wake = null;
+async function keepAwake() {
+  try {
+    if (navigator.wakeLock && document.visibilityState === 'visible' && !wake) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); }
+  } catch (e) { wake = null; }
+}
+if (document.addEventListener) document.addEventListener('visibilitychange', keepAwake);
+for (const ev of ['pointerdown', 'keydown', 'touchstart']) window.addEventListener(ev, keepAwake);
+keepAwake();
 
 let last = performance.now();
 function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; update(dt); render(); requestAnimationFrame(loop); }

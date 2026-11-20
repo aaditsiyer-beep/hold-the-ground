@@ -16,7 +16,7 @@ Serve the folder (`python3 -m http.server 8000`) and open http://localhost:8000.
 
 ## Rules
 
-- Six levels, each with its own terrain and biome (valley, woods, desert, snow, volcanic, final). Later levels have more houses, tougher and faster enemies.
+- Ten levels, each with its own terrain and biome, getting much harder: more houses, tougher and faster enemies, armored knights, ranged slingers and bigger raids. Everyone can swim across rivers. The screen stays awake while you play (where the browser supports it).
 - Enemy houses keep producing soldiers. Destroy every house and the castle to win a level. Your gold, sword level and surviving army carry to the next level.
 - Banks earn 40 gold/s. Houses ($250) make a free soldier every 20 s (4 per house). Enemies attack banks, houses and walls. Walls get chewed through.
 - You respawn at your keep when you die. The game ends only if the keep falls.

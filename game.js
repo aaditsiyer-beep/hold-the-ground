@@ -287,6 +287,16 @@ const arcM = new THREE.MeshBasicMaterial({ color: 0xcfe6ff, transparent: true, o
 const arc = VM(new THREE.Mesh(new THREE.RingGeometry(1.1, 1.22, 32, 1, 0, Math.PI * 0.7), arcM)); arc.position.z = -2.2; camera.add(arc);
 const ringM = new THREE.MeshBasicMaterial({ color: 0xcfe6ff, transparent: true, opacity: 0, side: THREE.DoubleSide, depthTest: false });
 const fullRing = VM(new THREE.Mesh(new THREE.RingGeometry(1.0, 1.1, 40), ringM)); fullRing.position.z = -2.2; camera.add(fullRing);
+const bowVm = new THREE.Group(); camera.add(bowVm); bowVm.position.set(0.33, -0.2, -0.85); bowVm.visible = false;
+{
+  const wood = lam(0x7a5230), pts = [[-0.5, -0.15], [-0.25, -0.05], [0, 0], [0.25, -0.05], [0.5, -0.15]];
+  for (let i = 0; i < 4; i++) {
+    const [y1, z1] = pts[i], [y2, z2] = pts[i + 1], dy = y2 - y1, dz = z2 - z1, q = VM(new THREE.Mesh(new THREE.BoxGeometry(0.05, Math.hypot(dy, dz) + 0.02, 0.05), wood));
+    q.position.set(0, (y1 + y2) / 2, (z1 + z2) / 2); q.rotation.x = Math.atan2(dz, dy); bowVm.add(q);
+  }
+  const str = VM(new THREE.Mesh(new THREE.BoxGeometry(0.012, 1.05, 0.012), lam(0xeeeeee))); str.position.z = -0.15; bowVm.add(str);
+  const arrow = VM(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.7), lam(0x9a7a4a))); arrow.position.z = -0.1; bowVm.add(arrow);
+}
 const REST = { px: .38, py: -.42, pz: -.45, rx: .5, ry: .25, rz: 0 };
 const POSES = {
   slashA: [{ px: .8, py: -.35, pz: -.4, rx: .3, ry: -1.0, rz: 0 }, { px: -.35, py: -.45, pz: -.45, rx: .2, ry: 1.2, rz: 0 }],
@@ -322,7 +332,8 @@ const GOD_CD = { bolt: 1.5, wave: 1.8, drain: 1.2, spear: 1.3, hammer: 1.3, rave
 const GOD_DMG = { bolt: 160, wave: 90, drain: 110, spear: 150, hammer: 130, ravens: 110, dagger: 70, heal: 85 };
 const GOD_COST = 50000;
 
-let player, enemies, soldiers, structs, eBuild, effects, sinkers, gold, swordLvl, state, gameT, army, shopOpen = false;
+let player, enemies, soldiers, structs, eBuild, effects, sinkers, gold, swordLvl, state, gameT, shopOpen = false;
+let possessed = null, saved = null, lastSig = '', bowKick = 0; const ratio = { attack: 0.3, garrison: 0.2 };
 let burstT = 0; const tj = { x: 0, y: 0 };
 let yaw = -Math.PI / 2, pitch = 0, bobT = 0, msg = '', sayT; const keys = {};
 let charging = false, chargeT = 0, queued = false, lookDrag = false;
@@ -353,11 +364,11 @@ function startLevel(idx, carry) {
     do { const an = Math.random() * 6.28, r = 5 + Math.random() * 9; x = b.x + Math.cos(an) * r; z = b.z + Math.sin(an) * r; k++; } while ((heightAt(x, z) < WATER + 0.2 || x < -98 || x > -58 || Math.abs(z) > 95) && k < 25);
     spawnEnemy(x, z, pickGuard(), { x, z });
   }
-  gold = carry ? carry.gold : LV.gold; swordLvl = carry ? carry.sword : 0; gameT = 0; army = 'defend'; state = 'play'; burstT = LV.burst || 0;
+  gold = carry ? carry.gold : LV.gold; swordLvl = carry ? carry.sword : 0; gameT = 0; state = 'play'; possessed = null; saved = null; lastSig = ''; burstT = LV.burst || 0;
   if (carry) carry.army.forEach((sp, i) => addSoldier(sp, px + 4 + (i % 4) * 2.5, -6 + Math.floor(i / 4) * 2.5 + (i % 4)));
   snap = { gold, sword: swordLvl, army: soldiers.map(q => q.spec) };
   yaw = -Math.PI / 2; pitch = 0; charging = false; chargeT = 0; queued = false;
-  setShop(false); setLevels(false); $('over').hidden = true; $('btnArmy').textContent = 'Army: Defend (T)';
+  setShop(false); setLevels(false); setArmyMenu(false); $('over').hidden = true;
   $('lvl').textContent = 'Level ' + (idx + 1) + '/' + LEVELS.length + ': ' + LV.name;
   say(LV.name + '. The enemy kingdom is to the west. Press B for the shop. Click the view to look with the mouse.');
 }
@@ -406,6 +417,7 @@ function startSwing(type) {
   return true;
 }
 function comboSwing() {
+  if (special()) return fireAt();
   const seq = ['slashA', 'slashB', 'overhead'];
   if (player.swing) { queued = true; return; }
   player.combo = player.comboT > 0 ? (player.combo + 1) % 3 : 0;
@@ -429,7 +441,7 @@ function swingDamage(type) {
 
 // ---------- shop ----------
 const ITEMS = [
-  { sec: 'Army', id: 'soldier', name: 'Soldier', desc: 'Melee fighter. Obeys your army orders.', cost: 60 },
+  { sec: 'Army', id: 'soldier', name: 'Soldier', desc: 'Melee fighter. Set its role in the Army menu (T).', cost: 60 },
   { id: 'archer', name: 'Archer', desc: 'Long range (34). Cannot cross water.', cost: 90 },
   { sec: 'Buildings', id: 'bank', name: 'Bank', desc: '+40 gold per second. Enemies will target it.', cost: 300 },
   { id: 'home', name: 'House', desc: 'Makes a free soldier every 20 s (up to 4 per house). Enemies will target it.', cost: 250 },
@@ -454,7 +466,7 @@ function renderShop() {
 }
 function setLevels(open) {
   shopOpen = open; $('levelMenu').hidden = !open;
-  if (open) { try { document.exitPointerLock(); } catch (e) {} renderLevels(); charging = false; $('shopMenu').hidden = true; }
+  if (open) { try { document.exitPointerLock(); } catch (e) {} renderLevels(); charging = false; $('shopMenu').hidden = true; $('armyMenu').hidden = true; }
 }
 function unlocked() { try { return Math.max(0, +localStorage.getItem('htg_unlocked') || 0); } catch (e) { return 0; } }
 function unlock(n) { try { if (n > unlocked()) localStorage.setItem('htg_unlocked', n); } catch (e) {} }
@@ -469,7 +481,7 @@ function renderLevels() {
   });
 }
 function setShop(open) {
-  shopOpen = open; $('shopMenu').hidden = !open; if (open) $('levelMenu').hidden = true;
+  shopOpen = open; $('shopMenu').hidden = !open; if (open) { $('levelMenu').hidden = true; $('armyMenu').hidden = true; }
   if (open) { try { document.exitPointerLock(); } catch (e) {} renderShop(); charging = false; }
 }
 function placeAhead(dist) { return { x: Math.max(-HALF, Math.min(HALF, player.x + Math.sin(yaw) * dist)), z: Math.max(-HALF, Math.min(HALF, player.z + Math.cos(yaw) * dist)) }; }
@@ -505,7 +517,97 @@ function addSoldier(spec, x, z) {
       c: makeChar(ranged ? { shirt: 0x3fa55b, pants: 0x2a4a30, weapon: 'bow' } : { shirt: 0x4a8ae0, pants: 0x1c2e63, weapon: 'sword' }) });
   }
 }
-function setArmy(a) { army = a; $('btnArmy').textContent = 'Army: ' + (a === 'defend' ? 'Defend' : 'Attack') + ' (T)'; flashMsg(a === 'attack' ? 'Your army marches on the enemy kingdom.' : 'Your army holds the line.'); }
+// ---------- army roles ----------
+function setRole(s, r) {
+  const was = s.role; s.role = r;
+  if (r === 'defend' && !s.post) s.post = { x: KEEP.x - 8 + (Math.random() - .5) * 8, z: (Math.random() - .5) * 28 };
+  if (was === 'garrison' && r !== 'garrison') { s.x = KEEP.x - 9 + Math.random() * 3; s.z = (Math.random() - .5) * 10; }
+}
+function rebalance() {
+  const alive = soldiers.filter(q => !q.dying), n = alive.length;
+  const wantA = Math.round(n * ratio.attack), wantG = Math.min(alive.filter(q => !q.god).length, Math.round(n * ratio.garrison));
+  const want = { attack: wantA, garrison: wantG, defend: Math.max(0, n - wantA - wantG) }, cnt = { attack: 0, garrison: 0, defend: 0 }, loose = [];
+  for (const q of alive) { if (q.role && cnt[q.role] < want[q.role] && !(q.role === 'garrison' && q.god)) cnt[q.role]++; else loose.push(q); }
+  loose.sort((x, y) => (y.god ? 1 : 0) - (x.god ? 1 : 0));
+  for (const q of loose) {
+    const r = ['defend', 'attack', 'garrison'].find(k => cnt[k] < want[k] && !(k === 'garrison' && q.god)) || 'defend';
+    cnt[r]++; setRole(q, r);
+  }
+}
+function garrisonTick(s, dt) {
+  const k = structs[0]; s.cd -= dt; s.roofY = k.y + 11;
+  if (s.slot < 12) {
+    const a = s.slot / 12 * Math.PI * 2; s.x = k.x + Math.cos(a) * 2.6; s.z = k.z + Math.sin(a) * 2.6;
+    const t = nearest(s, enemies, 34);
+    if (t) {
+      face(s, t.e.x - s.x, t.e.z - s.z);
+      if (s.cd <= 0) { s.cd = 0.9; s.c.atk = 0.3; hurtT(t.e, 10 + swordLvl * 2); tracer(new THREE.Vector3(s.x, s.roofY + 1.6, s.z), new THREE.Vector3(t.e.x, (t.e.y || 0) + 2, t.e.z)); }
+    }
+    animChar(s.c, dt, false, 1);
+  } else { s.x = k.x; s.z = k.z; }
+}
+function setArmyMenu(open) {
+  shopOpen = open; $('armyMenu').hidden = !open;
+  if (open) { try { document.exitPointerLock(); } catch (e) {} $('shopMenu').hidden = true; $('levelMenu').hidden = true; charging = false; renderArmy(); }
+}
+function renderArmy() {
+  const body = $('armyBody'); body.innerHTML = '';
+  const info = document.createElement('div'); info.className = 'd'; info.style.padding = '10px 0';
+  const refresh = () => { const a = soldiers.filter(q => !q.dying), n = r => a.filter(q => q.role === r).length;
+    info.textContent = 'Defend ' + n('defend') + '  ·  Attack ' + n('attack') + '  ·  Garrison ' + n('garrison') + '  ·  Total ' + a.length; };
+  body.appendChild(info);
+  const row = (label, key, other, hint) => {
+    const w = document.createElement('div'); w.className = 'row'; const l = document.createElement('span'); l.style.minWidth = '150px';
+    const inp = document.createElement('input'); inp.type = 'range'; inp.min = 0; inp.max = 100; inp.value = Math.round(ratio[key] * 100); inp.id = 'rng_' + key;
+    const show = () => { l.textContent = label + ' ' + Math.round(ratio[key] * 100) + '%'; };
+    inp.oninput = () => { ratio[key] = Math.min(+inp.value, 100 - Math.round(ratio[other] * 100)) / 100; inp.value = Math.round(ratio[key] * 100); show(); rebalance(); lastSig = ''; refresh(); };
+    show(); w.append(l, inp); body.appendChild(w);
+    const h = document.createElement('div'); h.className = 'd'; h.textContent = hint; body.appendChild(h);
+  };
+  row('Attack', 'attack', 'garrison', 'March on the enemy kingdom and fight whatever they meet.');
+  row('Garrison', 'garrison', 'attack', 'Man the keep roof (12 fit; extras wait inside), shoot attackers and repair the keep. Gods cannot garrison.');
+  const rest = document.createElement('div'); rest.className = 'd'; rest.style.padding = '10px 0';
+  rest.textContent = 'Everyone else defends: they hold positions in front of the keep and fight what comes near. New soldiers fill the split automatically. Press X in the game to take control of a soldier.';
+  body.appendChild(rest); refresh();
+}
+
+// ---------- become a soldier ----------
+function possess() {
+  if (state !== 'play' || player.dead || shopOpen) return;
+  if (possessed) return release();
+  const fx = Math.sin(yaw), fz = Math.cos(yaw); let best = null, bs = 45;
+  for (const q of soldiers) {
+    if (q.dying || q.role === 'garrison') continue;
+    const dx = q.x - player.x, dz = q.z - player.z, d = Math.hypot(dx, dz) || 0.001, score = d * ((dx * fx + dz * fz) / d > 0.3 ? 1 : 1.6);
+    if (score < bs) { bs = score; best = q; }
+  }
+  if (!best) return flashMsg('No soldier near you to control.');
+  possessed = best; saved = { x: player.x, z: player.z, y: player.y, hp: player.hp, max: player.max };
+  player.x = best.x; player.z = best.z; player.y = best.y; player.hp = best.hp; player.max = best.max; player.vy = 0; player.swing = null;
+  best.possessed = true; flashMsg('You are now ' + (best.god ? best.god.name : best.ranged ? 'an archer' : 'a soldier') + '. Press X to return.');
+}
+function release() {
+  if (!possessed) return;
+  const q = possessed; q.hp = Math.max(1, player.hp); q.x = player.x; q.z = player.z; q.possessed = false; possessed = null;
+  Object.assign(player, { x: saved.x, z: saved.z, y: saved.y, hp: saved.hp, max: saved.max, vy: 0, swing: null }); flashMsg('You returned to your own body.');
+}
+function fireAt() {
+  const s = possessed; if (!s || s.cd > 0 || player.dead) return;
+  const fx = Math.sin(yaw), fz = Math.cos(yaw), g = s.god, R = g ? GOD_RANGE[g.kind] : 46;
+  let best = null, bd = R, isB = false;
+  for (const [list, b] of [[enemies, false], [eBuild, true]]) for (const e of list) {
+    if (e.dying || (b && !alive(e))) continue;
+    const dx = e.x - s.x, dz = e.z - s.z, d = Math.hypot(dx, dz) || 0.001, rad = b ? e.r : 0.5;
+    if (d - rad > R || (dx * fx + dz * fz) / d < 0.95) continue;
+    if (d < bd) { bd = d; best = e; isB = b; }
+  }
+  s.c.atk = 0.3; bowKick = 0.18;
+  const eye = new THREE.Vector3(s.x, s.y + (g ? 1.7 * g.sc : 1.8), s.z);
+  if (!best) { s.cd = 0.5; tracer(eye, new THREE.Vector3(s.x + fx * 30, eye.y + pitch * 30, s.z + fz * 30)); return; }
+  if (g) { godAttack(s, best, isB); return; }
+  s.cd = 0.7; hurtT(best, (10 + swordLvl * 2) * (isB ? 3 : 1) * 1.5); tracer(eye, new THREE.Vector3(best.x, (best.y || 0) + 2, best.z));
+}
+const special = () => possessed && (possessed.ranged || possessed.god);
 
 // ---------- enemies and gods ----------
 function spawnEnemy(x, z, type, post) {
@@ -573,7 +675,7 @@ function update(dt) {
       if (tj.x || tj.y) { ix = tj.x; iz = tj.y; }
       let moving = false;
       if (ix || iz) {
-        const dx0 = fx * iz + rx * ix, dz0 = fz * iz + rz * ix, l = Math.hypot(dx0, dz0), sp = 9 * (inWater(player) ? 0.55 : 1) * (charging ? 0.6 : 1) * dt;
+        const dx0 = fx * iz + rx * ix, dz0 = fz * iz + rz * ix, l = Math.hypot(dx0, dz0), sp = (possessed ? possessed.speed * 1.5 : 9) * (inWater(player) ? 0.55 : 1) * (charging ? 0.6 : 1) * dt;
         player.x = Math.max(-HALF, Math.min(HALF, player.x + dx0 / l * sp)); player.z = Math.max(-HALF, Math.min(HALF, player.z + dz0 / l * sp)); moving = true; bobT += dt * 9;
       }
       if (player.dash > 0) { player.dash -= dt; player.x += fx * 26 * dt; player.z += fz * 26 * dt; }
@@ -581,6 +683,7 @@ function update(dt) {
       const gy = groundY(player.x, player.z);
       if (keys[' '] && player.y <= gy + 0.05) player.vy = 9;
       player.vy -= 26 * dt; player.y += player.vy * dt; if (player.y < gy) { player.y = gy; player.vy = 0; }
+      if (possessed) { possessed.x = player.x; possessed.z = player.z; possessed.hp = player.hp; }
       if (keys.q) yaw += 2 * dt; if (keys.e) yaw -= 2 * dt;
       if (charging) chargeT = Math.min(1.5, chargeT + dt);
       // swing
@@ -613,7 +716,7 @@ function update(dt) {
     for (const e of enemies) {
       if (e.dying) continue;
       e.cd -= dt; const d = e.d, r = 0.6 * d.s;
-      let t = nearest(e, [...(player.dead ? [] : [player]), ...soldiers.filter(s => !s.dying)], e.guard ? (d.range ? d.range + 6 : 24) : (d.range ? d.range + 4 : 14));
+      let t = nearest(e, [...(player.dead ? [] : [player]), ...soldiers.filter(s => !s.dying && s.role !== 'garrison' && !s.possessed)], e.guard ? (d.range ? d.range + 6 : 24) : (d.range ? d.range + 4 : 14));
       if (t && e.guard && Math.hypot(e.x - e.guard.x, e.z - e.guard.z) > 42) t = null;
       let tx, tz, moving = true, sp = d.speed * LV.spd * (inWater(e) && !d.swim ? 0.55 : 1);
       if (t) { tx = t.e.x; tz = t.e.z; }
@@ -634,13 +737,21 @@ function update(dt) {
       }
       e.y = groundY(e.x, e.z); animChar(e.c, dt, moving, sp / 4.5, swimming(e));
     }
+    // army roles: rebalance when the army or the split changes; garrison slots; garrison repairs the keep
+    { const aliveN = soldiers.reduce((n, q) => n + (q.dying ? 0 : 1), 0), sig = aliveN + '|' + ratio.attack + '|' + ratio.garrison;
+      if (sig !== lastSig) { lastSig = sig; rebalance(); }
+      let gi = 0; for (const q of soldiers) if (!q.dying && q.role === 'garrison') q.slot = gi++;
+      const k = structs[0]; k.hp = Math.min(k.max, k.hp + Math.min(gi, 10) * 2 * dt); }
     // soldiers and gods
     for (const s of soldiers) {
       if (s.dying) continue;
+      if (s.possessed) { s.cd -= dt; continue; }
+      if (s.role === 'garrison') { garrisonTick(s, dt); continue; }
       s.cd -= dt; const g = s.god, arch = s.ranged && !g, range = g ? GOD_RANGE[g.kind] : s.ranged ? 34 : 2.3;
       let t = nearest(s, enemies, (g ? range : s.ranged ? 34 : 12) + 14), isB = false;
       if (!t && s.ranged) { const b = nearest(s, eBuild.filter(alive), range + 10); if (b && b.d - b.e.r <= range) { t = b; isB = true; } }
-      if (!t && army === 'attack') { const b = nearest(s, eBuild.filter(alive), 1e9); if (b) { t = b; isB = true; } }
+      if (t && s.role === 'defend' && s.post && !isB && Math.hypot(t.e.x - s.post.x, t.e.z - s.post.z) > 55) t = null;
+      if (!t && s.role === 'attack') { const b = nearest(s, eBuild.filter(alive), 1e9); if (b) { t = b; isB = true; } }
       let moving = false;
       if (t) {
         const dx = t.e.x - s.x, dz = t.e.z - s.z; face(s, dx, dz);
@@ -658,10 +769,14 @@ function update(dt) {
           }
         }
       }
+      if (!t && s.role === 'defend' && s.post) {
+        const dx = s.post.x - s.x, dz = s.post.z - s.z, d = Math.hypot(dx, dz);
+        if (d > 3) { const ss = s.speed * (inWater(s) ? 0.8 : 1); let nx = s.x + dx / d * ss * dt, nz = s.z + dz / d * ss * dt; if (arch && inWater({ x: nx, z: nz })) { nx = s.x; nz = s.z; } s.x = nx; s.z = nz; face(s, dx, dz); moving = true; collide(s, g ? 1.2 : 0.6, true); }
+      }
       s.y = groundY(s.x, s.z); animChar(s.c, dt, moving, 1.2, swimming(s));
     }
     // keep units from stacking: push overlapping units apart (gods are heavy)
-    const crowd = [...enemies, ...soldiers].filter(u => !u.dying);
+    const crowd = [...enemies, ...soldiers].filter(u => !u.dying && u.role !== 'garrison' && !u.possessed);
     const rad = u => 0.42 * (u.god ? u.god.sc : u.d ? u.d.s : 1), mass = u => u.god ? 5 : u.d ? u.d.s : 1;
     for (let i = 0; i < crowd.length; i++) for (let j = i + 1; j < crowd.length; j++) {
       const a = crowd[i], b = crowd[j]; let dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz); const min = rad(a) + rad(b);
@@ -671,10 +786,10 @@ function update(dt) {
       a.x -= dx / d * push * 2 * wa; a.z -= dz / d * push * 2 * wa; b.x += dx / d * push * 2 * wb; b.z += dz / d * push * 2 * wb;
     }
     if (!player.dead) for (const u of soldiers) {
-      if (u.dying) continue; const dx = u.x - player.x, dz = u.z - player.z, d = Math.hypot(dx, dz) || 0.001, min = rad(u) + 0.6;
+      if (u.dying || u.role === 'garrison' || u.possessed) continue; const dx = u.x - player.x, dz = u.z - player.z, d = Math.hypot(dx, dz) || 0.001, min = rad(u) + 0.6;
       if (d < min) { u.x += dx / d * (min - d); u.z += dz / d * (min - d); }
     }
-    for (const u of soldiers) if (!u.dying) collide(u, rad(u), true);
+    for (const u of soldiers) if (!u.dying && u.role !== 'garrison' && !u.possessed) collide(u, rad(u), true);
     for (const u of enemies) if (!u.dying) collide(u, rad(u), false);
     // archers can't cross water: undo anything that pushed them in
     for (const u of soldiers) if (u.ranged && !u.god && !u.dying) { if (!inWater(u)) { u.lx = u.x; u.lz = u.z; } else if (u.lx !== undefined) { u.x = u.lx; u.z = u.lz; } }
@@ -692,7 +807,7 @@ function update(dt) {
     // deaths
     for (const e of enemies) if (e.hp <= 0 && !e.dying) { e.dying = 0.7; gold += e.d.reward; }
     for (const s of soldiers) if (s.hp <= 0 && !s.dying) s.dying = 0.7;
-    if (player.hp <= 0 && !player.dead) { player.dead = true; player.respawn = 5; player.swing = null; charging = false; }
+    if (player.hp <= 0 && !player.dead) { if (possessed) { possessed.hp = 0; possessed.possessed = false; possessed = null; player.max = saved.max; } player.dead = true; player.respawn = 5; player.swing = null; charging = false; }
     if (structs[0].hp <= 0) endGame(false, 'The keep was overrun.');
     else if (!eBuild.length) endGame(true);
   }
@@ -706,7 +821,12 @@ function update(dt) {
   effects = effects.filter(f => { if (f.t <= 0) scene.remove(f.obj); return f.t > 0; });
   for (const s of sinkers) { s.t -= dt; s.mesh.position.y -= dt * 3; if (s.t <= 0) scene.remove(s.mesh); }
   sinkers = sinkers.filter(s => s.t > 0);
-  for (const e of [...enemies, ...soldiers]) { e.y = groundY(e.x, e.z); e.c.root.position.set(e.x, e.y, e.z); if (!e.dying) e.c.root.rotation.x = swimming(e) ? 0.6 : 0; }
+  for (const e of [...enemies, ...soldiers]) {
+    const roof = e.role === 'garrison' && e.slot < 12;
+    e.y = roof ? e.roofY : groundY(e.x, e.z); e.c.root.position.set(e.x, e.y, e.z);
+    e.c.root.visible = !(e.possessed || (e.role === 'garrison' && e.slot >= 12));
+    if (!e.dying) e.c.root.rotation.x = !roof && swimming(e) ? 0.6 : 0;
+  }
   updateViewmodel(dt);
 }
 function endGame(won, why) {
@@ -725,7 +845,8 @@ function endGame(won, why) {
   }
 }
 function updateViewmodel(dt) {
-  vm.visible = !player.dead;
+  vm.visible = !player.dead && !special();
+  bowVm.visible = !!(possessed && possessed.ranged && !possessed.god && !player.dead); bowKick = Math.max(0, bowKick - dt); bowVm.position.z = -0.85 + bowKick;
   let pose;
   const sg = player.swing;
   if (sg) {
@@ -748,7 +869,7 @@ function updateViewmodel(dt) {
 
 // ---------- render ----------
 function render() {
-  const eye = player.y + 1.85 - (player.dead ? 1.4 : 0);
+  const eye = player.y + (possessed && possessed.god ? 1.7 * possessed.god.sc : 1.85) - (player.dead ? 1.4 : 0);
   camera.position.set(player.x, eye, player.z);
   camera.rotation.y = yaw + Math.PI; camera.rotation.x = pitch; if (player.dead) camera.rotation.z = Math.min(1.3, camera.rotation.z + 0.05);
   sun.position.set(player.x + 30, 55, player.z + 20); sun.target.position.set(player.x, 0, player.z);
@@ -756,7 +877,7 @@ function render() {
   $('hp').style.width = Math.max(0, player.hp / player.max * 100) + '%';
   const keep = structs[0]; $('keep').style.width = Math.max(0, keep.hp / keep.max * 100) + '%';
   const homes = structs.filter(s => s.type === 'home').length, banks = structs.filter(s => s.type === 'bank').length, houses = eBuild.filter(b => b.type === 'house').length, castle = eBuild.some(b => b.type === 'castle');
-  $('stats').textContent = 'Gold ' + fmt(gold) + '  (+' + banks * 40 + '/s, ' + banks + ' bank' + (banks === 1 ? '' : 's') + ')   Homes ' + homes + '   Sword Lv ' + swordLvl + '   Army ' + soldiers.length;
+  $('stats').textContent = 'Gold ' + fmt(gold) + '  (+' + banks * 40 + '/s, ' + banks + ' bank' + (banks === 1 ? '' : 's') + ')   Homes ' + homes + '   Sword Lv ' + swordLvl + '   Army ' + soldiers.length + (possessed ? '   Controlling ' + (possessed.god ? possessed.god.name : possessed.ranged ? 'an archer' : 'a soldier') + ' (X returns)' : '');
   const tgt = nearest(player, eBuild.filter(alive), 1e9);
   if (tgt) {
     let rel = Math.atan2(tgt.e.x - player.x, tgt.e.z - player.z) - yaw; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
@@ -773,10 +894,11 @@ function pressAttack() { if (shopOpen || state !== 'play') return; charging = tr
 function releaseAttack() {
   if (!charging) return; charging = false;
   if (player.dead || shopOpen) return;
+  if (special()) { fireAt(); chargeT = 0; return; }
   if (chargeT >= 0.6) { if (player.swing) queued = false; else startSwing('lunge'); } else comboSwing();
   chargeT = 0;
 }
-function doSpin() { if (player.spinCd <= 0 && !player.swing && !player.dead && state === 'play' && !shopOpen) { startSwing('spin'); player.spinCd = 1.5; } }
+function doSpin() { if (special()) return; if (player.spinCd <= 0 && !player.swing && !player.dead && state === 'play' && !shopOpen) { startSwing('spin'); player.spinCd = 1.5; } }
 const cv = renderer.domElement;
 const locked = () => document.pointerLockElement === cv;
 cv.addEventListener('contextmenu', e => e.preventDefault());
@@ -797,16 +919,20 @@ window.addEventListener('mousemove', e => {
 window.addEventListener('keydown', e => {
   const k = e.key.toLowerCase(); keys[k] = true;
   if (k === ' ' || k.startsWith('arrow')) e.preventDefault();
-  if (k === 'b' && state === 'play' && $('levelMenu').hidden) setShop(!shopOpen);
-  if (k === 'escape' && shopOpen) { setShop(false); setLevels(false); }
+  if (k === 'b' && state === 'play' && $('levelMenu').hidden && $('armyMenu').hidden) setShop(!shopOpen);
+  if (k === 't' && shopOpen && !$('armyMenu').hidden && state === 'play') { setArmyMenu(false); return; }
+  if (k === 'escape' && shopOpen) { setShop(false); setLevels(false); setArmyMenu(false); }
   if (shopOpen) return;
-  if (k === 't' && state === 'play') setArmy(army === 'defend' ? 'attack' : 'defend');
+  if (k === 't' && state === 'play') setArmyMenu(true);
+  if (k === 'x') possess();
   if (k === 'f') doSpin();
   if (k === 'r' && state !== 'play') overAction();
 });
 window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 $('btnShop').onclick = () => { if (state === 'play') setShop(!shopOpen); };
-$('btnArmy').onclick = () => { if (state === 'play') setArmy(army === 'defend' ? 'attack' : 'defend'); };
+$('btnArmy').onclick = () => { if (state === 'play') setArmyMenu($('armyMenu').hidden); };
+$('armyClose').onclick = () => setArmyMenu(false);
+$('btnPossess').onclick = possess;
 $('shopClose').onclick = () => setShop(false);
 $('again').onclick = () => overAction();
 $('btnLevels').onclick = () => setLevels($('levelMenu').hidden);
@@ -841,6 +967,7 @@ $('levelClose').onclick = () => setLevels(false);
   };
   hold('tAtk', pressAttack, releaseAttack);
   hold('tSpin', doSpin);
+  hold('tSwap', possess);
   hold('tJump', () => { keys[' '] = true; }, () => { keys[' '] = false; });
 }
 

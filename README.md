@@ -12,7 +12,7 @@ Serve the folder (`python3 -m http.server 8000`) and open http://localhost:8000.
 - Arrow keys (or WASD): move. Space: jump.
 - Mouse: look (click the view to capture it, or hold right mouse and drag). Q/E also turn.
 - Click: sword combo (slash, backhand, overhead slam). Hold click then release: lunge. F: spin attack.
-- B: shop menu (pauses the game). Levels button: pick any unlocked level. T: army Defend / Attack.
+- B: shop menu (pauses the game). T: Army orders menu (set what share of your soldiers attack, garrison the keep roof, or defend). X: become the nearest soldier (or god) and fight as it; press X again to return. Levels button: pick any unlocked level. T: army Defend / Attack.
 
 ## Rules
 

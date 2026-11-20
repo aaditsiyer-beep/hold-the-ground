@@ -4,17 +4,23 @@ const wrap = document.getElementById('wrap');
 const $ = id => document.getElementById(id);
 const LEVELS = [
   { name: 'Green Valley', desc: 'Rolling hills and a river. A gentle start.', houses: 4, hp: 150, castle: 600, spawn: 20, spawnN: 1, cap: 22, pace: 0.7, hpMul: 0.8, dmgMul: 0.9, spd: 1, burst: 0, burstN: 0, gold: 500, seed: 10, amp: 20, river: 1, rshift: 0, sky: 0xbcd8ee, grass: 0x5b8f3c, sand: 0xb8a36a, rock: 0x80807a, water: 0x3a78c4, leaf: 0x2f6b32 },
-  { name: 'Whispering Woods', desc: 'Tougher soldiers. Raids every 90 seconds.', houses: 5, hp: 260, castle: 1100, spawn: 15, spawnN: 1, cap: 32, pace: 1, hpMul: 1.2, dmgMul: 1.15, spd: 1.05, burst: 90, burstN: 3, gold: 600, seed: 47, amp: 24, river: 1, rshift: 12, sky: 0xa8c4b0, grass: 0x3f7a3a, sand: 0x9a9060, rock: 0x6a6a60, water: 0x2e6a8a, leaf: 0x1f5a2a },
+  { name: 'Whispering Woods', desc: 'Tougher soldiers and regular raids.', houses: 5, hp: 260, castle: 1100, spawn: 15, spawnN: 1, cap: 32, pace: 1, hpMul: 1.2, dmgMul: 1.15, spd: 1.05, burst: 90, burstN: 3, gold: 600, seed: 47, amp: 24, river: 1, rshift: 12, sky: 0xa8c4b0, grass: 0x3f7a3a, sand: 0x9a9060, rock: 0x6a6a60, water: 0x2e6a8a, leaf: 0x1f5a2a },
   { name: 'Scorched Dunes', desc: 'Island map. Archers on your shore can shell the castle across the strait. Knights appear.', houses: 6, hp: 380, castle: 1800, spawn: 12, spawnN: 2, cap: 42, pace: 1.3, hpMul: 1.6, dmgMul: 1.5, spd: 1.1, burst: 70, burstN: 5, gold: 800, seed: 83, amp: 14, river: 0, moat: -62, rshift: -8, sky: 0xf0d9a8, grass: 0xd9b872, sand: 0xcfa95a, rock: 0xa07050, water: 0x3a9aa8, leaf: 0x8a9a3a },
-  { name: 'Frozen Reach', desc: 'Slingers shoot from range. Raids every 55 seconds.', houses: 8, hp: 520, castle: 2800, spawn: 10, spawnN: 2, cap: 52, pace: 1.6, hpMul: 2.1, dmgMul: 1.9, spd: 1.15, burst: 55, burstN: 7, gold: 1000, seed: 121, amp: 26, river: 1, rshift: 6, sky: 0xdce8f4, grass: 0xe8eef2, sand: 0xc8d4dc, rock: 0x8a96a4, water: 0x6a9ad0, leaf: 0x5a8a78 },
-  { name: 'Ashen Highlands', desc: 'Lava strait between the islands. Big raids every 42 seconds.', houses: 9, hp: 700, castle: 4000, spawn: 8, spawnN: 3, cap: 64, pace: 2, hpMul: 2.8, dmgMul: 2.4, spd: 1.2, burst: 42, burstN: 10, gold: 1500, seed: 157, amp: 30, river: 0, moat: -62, rshift: -10, sky: 0x6a4a46, grass: 0x4a4040, sand: 0x3a3030, rock: 0x2a2525, water: 0xc04a1a, leaf: 0x3a2a2a },
+  { name: 'Frozen Reach', desc: 'Slingers shoot from range. Frequent raids.', houses: 8, hp: 520, castle: 2800, spawn: 10, spawnN: 2, cap: 52, pace: 1.6, hpMul: 2.1, dmgMul: 1.9, spd: 1.15, burst: 55, burstN: 7, gold: 1000, seed: 121, amp: 26, river: 1, rshift: 6, sky: 0xdce8f4, grass: 0xe8eef2, sand: 0xc8d4dc, rock: 0x8a96a4, water: 0x6a9ad0, leaf: 0x5a8a78 },
+  { name: 'Ashen Highlands', desc: 'Lava strait between the islands. Big, frequent raids.', houses: 9, hp: 700, castle: 4000, spawn: 8, spawnN: 3, cap: 64, pace: 2, hpMul: 2.8, dmgMul: 2.4, spd: 1.2, burst: 42, burstN: 10, gold: 1500, seed: 157, amp: 30, river: 0, moat: -62, rshift: -10, sky: 0x6a4a46, grass: 0x4a4040, sand: 0x3a3030, rock: 0x2a2525, water: 0xc04a1a, leaf: 0x3a2a2a },
   { name: "Gods' End", desc: 'Ten houses making three soldiers each.', houses: 10, hp: 900, castle: 5500, spawn: 7, spawnN: 3, cap: 76, pace: 2.4, hpMul: 3.6, dmgMul: 3, spd: 1.25, burst: 34, burstN: 13, gold: 3000, seed: 199, amp: 24, river: 1, rshift: 0, sky: 0xd8c8f0, grass: 0x7a6aa0, sand: 0xb0a0c8, rock: 0x5a5070, water: 0xb080ff, leaf: 0x5a3a8a },
   { name: 'Storm Coast', desc: 'Island map under a gray sky. A relentless horde.', houses: 10, hp: 1100, castle: 7500, spawn: 6, spawnN: 3, cap: 80, pace: 2.8, hpMul: 4.6, dmgMul: 3.7, spd: 1.3, burst: 28, burstN: 16, gold: 5000, seed: 233, amp: 28, river: 0, moat: -62, rshift: 8, sky: 0x6a7a8a, grass: 0x4a6a5a, sand: 0x8a8a78, rock: 0x55606a, water: 0x2a5a8a, leaf: 0x2a4a3a },
-  { name: 'Bone Marsh', desc: 'Four soldiers per house. A raid every 24 seconds.', houses: 10, hp: 1400, castle: 10000, spawn: 5, spawnN: 4, cap: 90, pace: 3.3, hpMul: 6, dmgMul: 4.5, spd: 1.35, burst: 24, burstN: 20, gold: 8000, seed: 277, amp: 16, river: 0.8, rshift: -6, sky: 0x8a9a6a, grass: 0x5a6a3a, sand: 0x6a6a4a, rock: 0x4a4a3a, water: 0x4a6a3a, leaf: 0x3a4a2a },
+  { name: 'Bone Marsh', desc: 'Four soldiers per house and constant raids.', houses: 10, hp: 1400, castle: 10000, spawn: 5, spawnN: 4, cap: 90, pace: 3.3, hpMul: 6, dmgMul: 4.5, spd: 1.35, burst: 24, burstN: 20, gold: 8000, seed: 277, amp: 16, river: 0.8, rshift: -6, sky: 0x8a9a6a, grass: 0x5a6a3a, sand: 0x6a6a4a, rock: 0x4a4a3a, water: 0x4a6a3a, leaf: 0x3a4a2a },
   { name: 'Crimson Wastes', desc: 'Island map. Enemies hit like siege hammers.', houses: 10, hp: 1800, castle: 14000, spawn: 4.5, spawnN: 4, cap: 100, pace: 3.8, hpMul: 8, dmgMul: 5.5, spd: 1.4, burst: 20, burstN: 25, gold: 12000, seed: 311, amp: 20, river: 0, moat: -62, rshift: 4, sky: 0xe0a080, grass: 0xa04a3a, sand: 0xc08060, rock: 0x602a2a, water: 0x802a4a, leaf: 0x703030 },
-  { name: 'Olympus Fall', desc: 'The final stand. Five soldiers per house, raids every 16 seconds.', houses: 10, hp: 2400, castle: 20000, spawn: 4, spawnN: 5, cap: 110, pace: 4.5, hpMul: 10, dmgMul: 7, spd: 1.45, burst: 16, burstN: 30, gold: 20000, seed: 353, amp: 26, river: 1, rshift: 0, sky: 0xf8eec0, grass: 0xc8b060, sand: 0xe8dca0, rock: 0x9a8a60, water: 0xffe08a, leaf: 0xb08a30 },
+  { name: 'Olympus Fall', desc: 'The final stand. Five soldiers per house and near-constant raids.', houses: 10, hp: 2400, castle: 20000, spawn: 4, spawnN: 5, cap: 110, pace: 4.5, hpMul: 10, dmgMul: 7, spd: 1.45, burst: 16, burstN: 30, gold: 20000, seed: 353, amp: 26, river: 1, rshift: 0, sky: 0xf8eec0, grass: 0xc8b060, sand: 0xe8dca0, rock: 0x9a8a60, water: 0xffe08a, leaf: 0xb08a30 },
 ];
 
+// Difficulty pass: tougher everything, plus a standing defense army that grows each level.
+LEVELS.forEach((L, i) => {
+  L.hpMul *= 1.25; L.dmgMul *= 1.2; L.spawn *= 0.85; L.hp = Math.round(L.hp * 1.2); L.castle = Math.round(L.castle * 1.2);
+  L.cap = Math.round(L.cap * 1.1); if (L.burst) { L.burst = Math.max(12, Math.round(L.burst * 0.85)); L.burstN = Math.ceil(L.burstN * 1.25); }
+  L.guard = [6, 9, 12, 16, 20, 25, 30, 36, 42, 50][i];
+});
 let LV = LEVELS[0], levelIdx = 0, snap = null;
 const fmt = n => Math.floor(n).toLocaleString('en-US');
 
@@ -171,7 +177,41 @@ function makeChar(o) {
     bx(0.05, 0.05, 1.45, L(0x9a7a4a), 0, 0, 0.275, bowG); bx(0.1, 0.1, 0.2, L(0xcfd3d8), 0, 0, 1.05, bowG);
   }
   else if (o.weapon === 'hammer') { bx(0.2, 0.2, 2.4, L(0x6b4a2b), 0, -1.5, 1.0, armR); bx(1.0, 1.0, 1.3, L(wc), 0, -1.5, 2.3, armR); }
-  else if (o.weapon === 'trident') { bx(0.16, 0.16, 3.4, L(wc), 0, -1.5, 1.4, armR); for (const x of [-0.45, 0, 0.45]) bx(0.14, 0.14, 0.9, L(wc), x, -1.5, 3.4, armR); bx(1.1, 0.14, 0.14, L(wc), 0, -1.5, 3.0, armR); }
+  else if (o.weapon === 'trident') {
+    const gl = lam(wc, { emissive: wc });
+    bx(0.16, 0.16, 3.4, L(0xd9c27a), 0, -1.5, 1.4, armR); bx(1.2, 0.16, 0.16, L(0xd9c27a), 0, -1.5, 3.0, armR);
+    for (const x of [-0.55, 0, 0.55]) bx(0.14, 0.14, x ? 0.9 : 1.2, gl, x, -1.5, x ? 3.45 : 3.6, armR);
+    for (const x of [-0.55, 0.55]) bx(0.1, 0.1, 0.3, gl, x * 1.3, -1.5, 3.55, armR).rotation.y = x * 0.9;
+    bx(0.24, 0.24, 0.24, gl, 0, -1.5, -0.3, armR);
+  } else if (o.weapon === 'lightning') {
+    const gl = lam(wc, { emissive: wc });
+    for (const [x, z, ry, len] of [[0, 0.9, 0, 1.0], [0.28, 1.8, 0.7, 1.0], [-0.05, 2.7, -0.7, 1.0], [0.2, 3.5, 0.6, 0.8]]) bx(0.2, 0.2, len, gl, x, -1.5, z, armR).rotation.y = ry;
+    bx(0.4, 0.4, 0.4, gl, 0.1, -1.5, 4.0, armR); bx(0.14, 0.14, 0.7, L(0x6b4a2b), 0, -1.5, 0.2, armR);
+  } else if (o.weapon === 'bident') {
+    const fl = lam(wc, { emissive: wc }), dk = L(0x2a2030);
+    bx(0.16, 0.16, 3.4, dk, 0, -1.5, 1.4, armR); bx(1.0, 0.16, 0.16, dk, 0, -1.5, 3.1, armR);
+    for (const x of [-0.45, 0.45]) { bx(0.16, 0.16, 1.2, dk, x, -1.5, 3.7, armR); bx(0.22, 0.4, 0.3, fl, x, -1.3, 4.45, armR); }
+    bx(0.32, 0.6, 0.32, fl, 0, -1.2, 3.6, armR);
+  } else if (o.weapon === 'spear') {
+    bx(0.14, 0.14, 3.8, L(0x7a5230), 0, -1.5, 1.6, armR); bx(0.22, 0.22, 0.3, L(0xc0262d), 0, -1.5, 3.3, armR);
+    bx(0.3, 0.1, 1.1, L(wc), 0, -1.5, 4.0, armR); bx(0.55, 0.1, 0.4, L(wc), 0, -1.5, 3.65, armR); bx(0.2, 0.1, 0.4, L(wc), 0, -1.5, 4.65, armR);
+  } else if (o.weapon === 'mjolnir') {
+    const gl = lam(0x9fd0ff, { emissive: 0x9fd0ff }), dk = L(0x555d68);
+    bx(0.2, 0.2, 1.7, L(0x6b4a2b), 0, -1.5, 0.9, armR); bx(1.2, 0.9, 1.0, L(wc), 0, -1.5, 2.2, armR);
+    bx(1.35, 1.05, 0.22, dk, 0, -1.5, 1.65, armR); bx(1.35, 1.05, 0.22, dk, 0, -1.5, 2.75, armR); bx(1.25, 0.2, 0.35, gl, 0, -1.5, 2.2, armR);
+  } else if (o.weapon === 'gungnir') {
+    const gold = L(0xe8c050);
+    bx(0.15, 0.15, 4.0, L(0x3a2a1a), 0, -1.5, 1.8, armR); for (const z of [1.2, 2.4, 3.3]) bx(0.24, 0.24, 0.12, gold, 0, -1.5, z, armR);
+    bx(0.2, 0.08, 1.3, lam(0xe8ecf2, { emissive: 0x333a44 }), 0, -1.5, 4.5, armR); bx(0.2, 0.2, 0.2, lam(0xff6a3a, { emissive: 0xff6a3a }), 0, -1.5, 3.8, armR);
+  } else if (o.weapon === 'daggers') {
+    const gl = lam(wc, { emissive: wc }), dag = par => { bx(0.1, 0.22, 1.4, gl, 0, -1.5, 1.3, par).rotation.x = -0.12; bx(0.5, 0.1, 0.1, L(0xffd24a), 0, -1.5, 0.55, par); bx(0.14, 0.14, 0.5, L(0x222222), 0, -1.5, 0.3, par); };
+    dag(armR); dag(armL);
+  } else if (o.weapon === 'wand') {
+    const gl = lam(wc, { emissive: wc }), gold = L(0xe8c050);
+    bx(0.12, 0.12, 2.8, gold, 0, -1.5, 1.2, armR);
+    for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; bx(0.14, 0.14, 0.14, lam(0xffe08a, { emissive: 0xffd24a }), Math.cos(a) * 0.5, -1.5 + Math.sin(a) * 0.5, 3.0, armR); }
+    bx(0.34, 0.34, 0.34, gl, 0, -1.5, 3.0, armR);
+  }
   else if (o.weapon === 'staff') { bx(0.16, 0.16, 3.4, L(0x6b4a2b), 0, -1.5, 1.4, armR); const gm = lam(wc, { emissive: wc }); bx(0.5, 0.5, 0.5, gm, 0, -1.5, 3.3, armR); }
   if (o.god) godGear(o.god, root, armL, L);
   if (o.halo) { const h = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.09, 6, 24), new THREE.MeshBasicMaterial({ color: o.halo })); h.rotation.x = Math.PI / 2; h.position.y = 5.2; root.add(h); }
@@ -206,7 +246,7 @@ function godGear(id, root, armL, L) {
   } else if (id === 'odin') {
     cape(0x24304a); b(0.34, 0.26, 0.06, L(0x111111), 0.25, 4.15, 0.62); b(1.2, 1.0, 0.25, L(0xbfc4cc), 0, 3.4, 0.62);
     b(2.0, 0.1, 2.0, L(0x2a3550), 0, 4.65, 0); b(1.0, 0.7, 1.0, L(0x2a3550), 0, 5.0, 0);
-    for (const x of [-1.5, 1.5]) b(0.3, 0.3, 0.5, L(0x111111), x, 3.9, -0.3);
+    for (const x of [-1, 1]) { const bk = L(0x15151c); b(0.4, 0.38, 0.55, bk, x * 1.15, 4.0, 0.05); b(0.3, 0.3, 0.3, bk, x * 1.15, 4.3, 0.35); b(0.1, 0.1, 0.28, L(0xcccccc), x * 1.15, 4.28, 0.62); b(0.5, 0.08, 0.5, bk, x * 1.45, 4.05, -0.1); }
   } else if (id === 'loki') {
     cape(0x143a22); b(1.35, 0.45, 1.35, L(0x2a8a4a), 0, 4.7, 0);
     b(0.2, 1.1, 0.2, L(0xffd24a), -0.75, 5.2, 0, undefined, 0.5); b(0.2, 1.1, 0.2, L(0xffd24a), 0.75, 5.2, 0, undefined, -0.5);
@@ -268,14 +308,14 @@ const ENEMY = {
   brute:   { hp: 180, speed: 3,   dmg: 20, reward: 60, shirt: 0x7a2a7a, pants: 0x2a1a2a, s: 1.6, skin: 0xc8a060 },
 };
 const GODS = [
-  { id: 'zeus', skin: 0xf0d0b0, sc: 2.6, name: 'Zeus', myth: 'Greek', kind: 'bolt', shirt: 0xf4f1e8, pants: 0xd8c070, weapon: 'staff', wcol: 0xffe14a, col: 0xffe14a, desc: 'Lightning that chains between enemies.' },
-  { id: 'poseidon', skin: 0x7ad0d8, sc: 2.6, name: 'Poseidon', myth: 'Greek', kind: 'wave', shirt: 0x1a8a9a, pants: 0x14546a, weapon: 'trident', wcol: 0x9fe8ff, col: 0x44c0ff, desc: 'Crashing waves that hurl enemies back.' },
-  { id: 'hades', skin: 0x9a9ab8, sc: 2.4, name: 'Hades', myth: 'Greek', kind: 'drain', shirt: 0x3a2a5a, pants: 0x1c1430, weapon: 'staff', wcol: 0xa040ff, col: 0xa040ff, desc: 'Drains life from enemies to heal himself.' },
-  { id: 'athena', skin: 0xf4d8c0, sc: 2.3, name: 'Athena', myth: 'Greek', kind: 'spear', shirt: 0xb0b8c8, pants: 0x6a728a, weapon: 'trident', wcol: 0xeef2ff, col: 0xdde6ff, desc: 'Piercing spears. Heals nearby soldiers.' },
-  { id: 'thor', skin: 0xe8c8a0, sc: 2.8, name: 'Thor', myth: 'Norse', kind: 'hammer', shirt: 0xb03030, pants: 0x4a3a2a, weapon: 'hammer', wcol: 0x9aa4b0, col: 0x9fd0ff, desc: 'Hammer slams that shake the ground.' },
-  { id: 'odin', skin: 0xd8b890, sc: 2.5, name: 'Odin', myth: 'Norse', kind: 'ravens', shirt: 0x44506a, pants: 0x222a3a, weapon: 'staff', wcol: 0x888899, col: 0x888899, desc: 'Ravens strike three enemies at once.' },
-  { id: 'loki', skin: 0x9ad8a0, sc: 2.2, name: 'Loki', myth: 'Norse', kind: 'dagger', shirt: 0x2a8a4a, pants: 0x143a22, weapon: 'sword', wcol: 0x40e080, col: 0x40e080, desc: 'Lightning-fast melee strikes.' },
-  { id: 'freya', skin: 0xf8dcc8, sc: 2.2, name: 'Freya', myth: 'Norse', kind: 'heal', shirt: 0xe0a0c0, pants: 0x8a5a78, weapon: 'staff', wcol: 0xff9fcf, col: 0xff9fcf, desc: 'Light bolts that heal you and your army.' },
+  { id: 'zeus', skin: 0xf0d0b0, sc: 2.6, name: 'Zeus', myth: 'Greek', kind: 'bolt', shirt: 0xf4f1e8, pants: 0xd8c070, weapon: 'lightning', wcol: 0xffe14a, col: 0xffe14a, desc: 'Lightning that chains between enemies.' },
+  { id: 'poseidon', skin: 0x7ad0d8, sc: 2.6, name: 'Poseidon', myth: 'Greek', kind: 'wave', shirt: 0x1a8a9a, pants: 0x14546a, weapon: 'trident', wcol: 0x44d0ff, col: 0x44c0ff, desc: 'Crashing waves that hurl enemies back.' },
+  { id: 'hades', skin: 0x9a9ab8, sc: 2.4, name: 'Hades', myth: 'Greek', kind: 'drain', shirt: 0x3a2a5a, pants: 0x1c1430, weapon: 'bident', wcol: 0xa040ff, col: 0xa040ff, desc: 'Drains life from enemies to heal himself.' },
+  { id: 'athena', skin: 0xf4d8c0, sc: 2.3, name: 'Athena', myth: 'Greek', kind: 'spear', shirt: 0xb0b8c8, pants: 0x6a728a, weapon: 'spear', wcol: 0xeef2ff, col: 0xdde6ff, desc: 'Piercing spears. Heals nearby soldiers.' },
+  { id: 'thor', skin: 0xe8c8a0, sc: 2.8, name: 'Thor', myth: 'Norse', kind: 'hammer', shirt: 0xb03030, pants: 0x4a3a2a, weapon: 'mjolnir', wcol: 0x9aa4b0, col: 0x9fd0ff, desc: 'Hammer slams that shake the ground.' },
+  { id: 'odin', skin: 0xd8b890, sc: 2.5, name: 'Odin', myth: 'Norse', kind: 'ravens', shirt: 0x44506a, pants: 0x222a3a, weapon: 'gungnir', wcol: 0xe8c050, col: 0x888899, desc: 'Ravens strike three enemies at once.' },
+  { id: 'loki', skin: 0x9ad8a0, sc: 2.2, name: 'Loki', myth: 'Norse', kind: 'dagger', shirt: 0x2a8a4a, pants: 0x143a22, weapon: 'daggers', wcol: 0x40e080, col: 0x40e080, desc: 'Lightning-fast melee strikes.' },
+  { id: 'freya', skin: 0xf8dcc8, sc: 2.2, name: 'Freya', myth: 'Norse', kind: 'heal', shirt: 0xe0a0c0, pants: 0x8a5a78, weapon: 'wand', wcol: 0xff9fcf, col: 0xff9fcf, desc: 'Light bolts that heal you and your army.' },
 ];
 const GOD_RANGE = { bolt: 45, wave: 26, drain: 20, spear: 34, hammer: 4.5, ravens: 40, dagger: 3.2, heal: 30 };
 const GOD_CD = { bolt: 1.5, wave: 1.8, drain: 1.2, spear: 1.3, hammer: 1.3, ravens: 1.6, dagger: 0.35, heal: 1.1 };
@@ -308,6 +348,11 @@ function startLevel(idx, carry) {
   for (const [x, z] of (LV.moat ? ISLAND_HOUSES : HOUSES).slice(0, LV.houses)) eBuild.push(makeStruct('house', x, z, 3.2, LV.hp, makeHouseMesh(), { t: 8 + Math.random() * 8 }));
   eBuild.push(makeStruct('castle', BASE.x - 4, 0, 8, LV.castle, makeCastleMesh(), { t: 45 }));
   for (const b of eBuild) b.mesh.rotation.y = Math.PI / 2;
+  for (let i = 0; i < LV.guard; i++) {
+    const b = eBuild[Math.random() * eBuild.length | 0]; let x, z, k = 0;
+    do { const an = Math.random() * 6.28, r = 5 + Math.random() * 9; x = b.x + Math.cos(an) * r; z = b.z + Math.sin(an) * r; k++; } while ((heightAt(x, z) < WATER + 0.2 || x < -98 || x > -58 || Math.abs(z) > 95) && k < 25);
+    spawnEnemy(x, z, pickGuard(), { x, z });
+  }
   gold = carry ? carry.gold : LV.gold; swordLvl = carry ? carry.sword : 0; gameT = 0; army = 'defend'; state = 'play'; burstT = LV.burst || 0;
   if (carry) carry.army.forEach((sp, i) => addSoldier(sp, px + 4 + (i % 4) * 2.5, -6 + Math.floor(i / 4) * 2.5 + (i % 4)));
   snap = { gold, sword: swordLvl, army: soldiers.map(q => q.spec) };
@@ -463,9 +508,16 @@ function addSoldier(spec, x, z) {
 function setArmy(a) { army = a; $('btnArmy').textContent = 'Army: ' + (a === 'defend' ? 'Defend' : 'Attack') + ' (T)'; flashMsg(a === 'attack' ? 'Your army marches on the enemy kingdom.' : 'Your army holds the line.'); }
 
 // ---------- enemies and gods ----------
-function spawnEnemy(x, z, type) {
+function spawnEnemy(x, z, type, post) {
   const d = ENEMY[type];
-  enemies.push({ type, d, x, z, y: heightAt(x, z), hp: d.hp * LV.hpMul, max: d.hp * LV.hpMul, cd: 0, tz: (Math.random() - .5) * 10, dying: 0, c: makeChar({ shirt: d.shirt, pants: d.pants, s: d.s, skin: d.skin }) });
+  enemies.push({ type, d, x, z, y: heightAt(x, z), hp: d.hp * LV.hpMul, max: d.hp * LV.hpMul, cd: 0, tz: (Math.random() - .5) * 10, dying: 0, guard: post || null, c: makeChar({ shirt: d.shirt, pants: d.pants, s: d.s, skin: d.skin }) });
+}
+const raiders = () => { let n = 0; for (const e of enemies) if (!e.guard) n++; return n; };
+function pickGuard() {
+  const pool = ['grunt', 'grunt', 'grunt'];
+  if (levelIdx >= 1) pool.push('slinger', 'slinger'); if (levelIdx >= 2) pool.push('knight', 'knight'); if (levelIdx >= 3) pool.push('runner');
+  if (levelIdx >= 4) pool.push('brute'); if (levelIdx >= 7) pool.push('knight', 'brute');
+  return pool[Math.random() * pool.length | 0];
 }
 function pickType() {
   const t = gameT * LV.pace, pool = ['grunt', 'grunt', 'grunt'];
@@ -546,30 +598,33 @@ function update(dt) {
       if (!alive(b)) continue;
       b.t -= dt * rate;
       if (b.t <= 0) {
-        if (b.type === 'house') { for (let i = 0; i < LV.spawnN; i++) if (enemies.length < LV.cap) spawnEnemy(b.x + 3.5, b.z + (Math.random() - .5) * 6, pickType()); b.t = LV.spawn + Math.random() * 6; }
-        else { if (enemies.length < LV.cap) spawnEnemy(b.x + 6, b.z, 'brute'); b.t = LV.spawn * 2.4; }
+        if (b.type === 'house') { for (let i = 0; i < LV.spawnN; i++) if (raiders() < LV.cap) spawnEnemy(b.x + 3.5, b.z + (Math.random() - .5) * 6, pickType()); b.t = LV.spawn + Math.random() * 6; }
+        else { if (raiders() < LV.cap) spawnEnemy(b.x + 6, b.z, 'brute'); b.t = LV.spawn * 2.4; }
       }
     }
     if (LV.burst) {
       burstT -= dt;
       if (burstT <= 0) {
         burstT = LV.burst; const c = eBuild.find(b => b.type === 'castle');
-        if (c) { for (let i = 0; i < LV.burstN; i++) if (enemies.length < LV.cap * 1.3) spawnEnemy(c.x + 6 + Math.random() * 3, c.z + (Math.random() - .5) * 12, pickType()); flashMsg('Raid! The enemy castle sends reinforcements.'); }
+        if (c) { for (let i = 0; i < LV.burstN; i++) if (raiders() < LV.cap * 1.3) spawnEnemy(c.x + 6 + Math.random() * 3, c.z + (Math.random() - .5) * 12, pickType()); flashMsg('Raid! The enemy castle sends reinforcements.'); }
       }
     }
     // enemies
     for (const e of enemies) {
       if (e.dying) continue;
       e.cd -= dt; const d = e.d, r = 0.6 * d.s;
-      const t = nearest(e, [...(player.dead ? [] : [player]), ...soldiers.filter(s => !s.dying)], d.range ? d.range + 4 : 14);
+      let t = nearest(e, [...(player.dead ? [] : [player]), ...soldiers.filter(s => !s.dying)], e.guard ? (d.range ? d.range + 6 : 24) : (d.range ? d.range + 4 : 14));
+      if (t && e.guard && Math.hypot(e.x - e.guard.x, e.z - e.guard.z) > 42) t = null;
       let tx, tz, moving = true, sp = d.speed * LV.spd * (inWater(e) && !d.swim ? 0.55 : 1);
       if (t) { tx = t.e.x; tz = t.e.z; }
+      else if (e.guard) { tx = e.guard.x; tz = e.guard.z; }
       else {
         const bank = nearest(e, structs.filter(s => (s.type === 'bank' || s.type === 'home') && alive(s)), 30);
         if (bank) { tx = bank.e.x; tz = bank.e.z; } else { tx = KEEP.x - 2; tz = KEEP.z + e.tz; }
       }
       const dx = tx - e.x, dz = tz - e.z, dist = Math.hypot(dx, dz) || 1;
-      if (t && t.d < (d.range || 1.9 * d.s + 0.6)) {
+      if (e.guard && !t && dist < 1.5) { moving = false; }
+      else if (t && t.d < (d.range || 1.9 * d.s + 0.6)) {
         moving = false; face(e, dx, dz);
         if (e.cd <= 0) { e.cd = d.range ? 1.4 : 0.9; e.c.atk = 0.3; if (d.range) tracer(new THREE.Vector3(e.x, e.y + 2, e.z), new THREE.Vector3(t.e.x, (t.e.y || 0) + 2, t.e.z), 0xc08040); t.e.hp -= d.dmg * LV.dmgMul; t.e.c ? (t.e.c.flash = 0.12) : 0; if (t.e === player) player.hurt = 0.25; }
       } else {

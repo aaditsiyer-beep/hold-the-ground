@@ -17,7 +17,7 @@ Serve the folder (`python3 -m http.server 8000`) and open http://localhost:8000.
 ## Rules
 
 - Ten levels, each with its own terrain and biome, getting much harder: more houses, tougher and faster enemies, armored knights, ranged slingers and bigger raids. Everyone can swim across rivers. The screen stays awake while you play (where the browser supports it).
-- Enemy houses keep producing soldiers. Destroy every house and the castle to win a level. Your gold, sword level and surviving army carry to the next level.
+- Every level starts with an enemy defending army posted around the castle and houses (6 on level 1, 50 on level 10). They guard their post and only fight what comes near. Enemy houses also keep producing raiders. Destroy every house and the castle to win a level. Your gold, sword level and surviving army carry to the next level.
 - Archers shoot from 34 units but cannot cross water. On island levels (3, 5, 7, 9) they shell the enemy houses and castle from your shore, with triple damage against buildings. Banks earn 40 gold/s. Houses ($250) make a free soldier every 20 s (4 per house). Enemies attack banks, houses and walls. Walls get chewed through.
 - You respawn at your keep when you die. The game ends only if the keep falls.
 - Greek and Norse gods (Zeus, Poseidon, Hades, Athena, Thor, Odin, Loki, Freya) cost $50,000 each.
